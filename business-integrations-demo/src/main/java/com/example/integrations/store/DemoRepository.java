@@ -3,6 +3,7 @@ package com.example.integrations.store;
 import com.example.integrations.billtrace.BillTraceNode;
 
 import java.util.Map;
+import java.util.List;
 
 public interface DemoRepository {
 
@@ -13,4 +14,8 @@ public interface DemoRepository {
     String findLocalUserId(String outerUserId);
 
     void saveSfLog(String billId, String serviceCode, boolean success, String result, String sign);
+
+    void saveOperationLog(String userId, String action, String detail, boolean success);
+
+    List<Map<String, Object>> operationLogs(int limit);
 }

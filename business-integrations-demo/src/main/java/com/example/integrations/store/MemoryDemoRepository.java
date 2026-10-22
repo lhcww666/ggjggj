@@ -85,6 +85,28 @@ public class MemoryDemoRepository implements DemoRepository {
         // 内存模式不持久化；SF 服务自身仍会保留演示日志。
     }
 
+    private final List<Map<String, Object>> operationLogs = new ArrayList<Map<String, Object>>();
+
+    @Override
+    public synchronized void saveOperationLog(String userId, String action, String detail, boolean success) {
+        Map<String, Object> log = new LinkedHashMap<String, Object>();
+        log.put("userId", userId);
+        log.put("action", action);
+        log.put("detail", detail);
+        log.put("success", success);
+        log.put("time", System.currentTimeMillis());
+        operationLogs.add(0, log);
+        if (operationLogs.size() > 200) {
+            operationLogs.remove(operationLogs.size() - 1);
+        }
+    }
+
+    @Override
+    public synchronized List<Map<String, Object>> operationLogs(int limit) {
+        int end = Math.min(limit, operationLogs.size());
+        return new ArrayList<Map<String, Object>>(operationLogs.subList(0, end));
+    }
+
     private List<BillTraceNode> traceDirection(String id, Map<String, List<String>> edges, Set<String> visited) {
         List<BillTraceNode> result = new ArrayList<BillTraceNode>();
         List<String> children = edges.get(id);

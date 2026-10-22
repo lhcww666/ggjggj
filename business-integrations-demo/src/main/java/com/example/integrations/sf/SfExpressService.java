@@ -1,6 +1,7 @@
 package com.example.integrations.sf;
 
 import com.example.integrations.config.IntegrationProperties;
+import com.example.integrations.operation.OperationLogService;
 import com.example.integrations.store.DemoRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -19,14 +20,17 @@ public class SfExpressService {
     private final IntegrationProperties properties;
     private final ObjectMapper mapper;
     private final DemoRepository repository;
+    private final OperationLogService logService;
     private final ConcurrentMap<String, SfOrderResponse> orders = new ConcurrentHashMap<String, SfOrderResponse>();
     private final ConcurrentMap<String, Boolean> cancelled = new ConcurrentHashMap<String, Boolean>();
     private final List<Map<String, Object>> pushLogs = new ArrayList<Map<String, Object>>();
 
-    public SfExpressService(IntegrationProperties properties, ObjectMapper mapper, DemoRepository repository) {
+    public SfExpressService(IntegrationProperties properties, ObjectMapper mapper,
+                            DemoRepository repository, OperationLogService logService) {
         this.properties = properties;
         this.mapper = mapper;
         this.repository = repository;
+        this.logService = logService;
     }
 
     public SfOrderResponse createOrder(SfOrderRequest request) {
@@ -145,6 +149,7 @@ public class SfExpressService {
         log.put("time", System.currentTimeMillis());
         pushLogs.add(log);
         repository.saveSfLog(billId, service, success, result, sign);
+        logService.record("demo-user", "SF_" + service, result, success);
     }
 
     private boolean isBlank(String value) {

@@ -1,6 +1,9 @@
 package com.example.integrations.sso;
 
 import com.example.integrations.config.IntegrationProperties;
+import com.example.integrations.auth.AuthService;
+import com.example.integrations.auth.AuthSession;
+import com.example.integrations.operation.OperationLogService;
 import com.example.integrations.store.DemoRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,13 +20,18 @@ public class SsoService {
     private final SsoTargetRegistry targetRegistry;
     private final SsoStateStore stateStore;
     private final DemoRepository repository;
+    private final AuthService authService;
+    private final OperationLogService logService;
 
     public SsoService(IntegrationProperties properties, SsoTargetRegistry targetRegistry,
-                      SsoStateStore stateStore, DemoRepository repository) {
+                      SsoStateStore stateStore, DemoRepository repository,
+                      AuthService authService, OperationLogService logService) {
         this.properties = properties;
         this.targetRegistry = targetRegistry;
         this.stateStore = stateStore;
         this.repository = repository;
+        this.authService = authService;
+        this.logService = logService;
     }
 
     public Map<String, Object> authorize(SsoAuthorizeRequest request) {
@@ -66,6 +74,7 @@ public class SsoService {
         long expiresAt = System.currentTimeMillis() + properties.getSsoCodeTtlSeconds() * 1000L;
         stateStore.saveCode(code, new SsoSession(localUserId, target, expiresAt),
                 properties.getSsoCodeTtlSeconds());
+        logService.record(localUserId, "SSO_AUTHORIZE", "换取一次性 code", true);
 
         Map<String, Object> data = new LinkedHashMap<String, Object>();
         data.put("code", code);
@@ -80,12 +89,17 @@ public class SsoService {
             return error(1009, "临时 code 无效或已过期");
         }
         Map<String, Object> data = new LinkedHashMap<String, Object>();
-        data.put("token", "demo-token-" + UUID.randomUUID().toString());
+        AuthSession authSession = authService.issueSsoToken(session.getLocalUserId());
+        data.put("token", authSession.getToken());
         Map<String, Object> user = new LinkedHashMap<String, Object>();
-        user.put("id", session.getLocalUserId());
-        user.put("name", session.getLocalUserId());
+        user.put("id", authSession.getUserId());
+        user.put("name", authSession.getDisplayName());
+        user.put("displayName", authSession.getDisplayName());
+        user.put("role", authSession.getRole());
+        user.put("permissions", authSession.getPermissions());
         data.put("user", user);
         data.put("target", session.getTarget());
+        logService.record(session.getLocalUserId(), "SSO_EXCHANGE", "code 兑换登录态", true);
         return success(data);
     }
 

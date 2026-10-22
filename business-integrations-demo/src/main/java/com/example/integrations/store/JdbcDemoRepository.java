@@ -93,6 +93,28 @@ public class JdbcDemoRepository implements DemoRepository {
                 billId, serviceCode, success ? 1 : 0, result, sign);
     }
 
+    @Override
+    public void saveOperationLog(String userId, String action, String detail, boolean success) {
+        jdbc.update("INSERT INTO operation_log (user_id, action, detail, success) VALUES (?, ?, ?, ?)",
+                userId, action, detail, success ? 1 : 0);
+    }
+
+    @Override
+    public List<Map<String, Object>> operationLogs(int limit) {
+        return jdbc.query(
+                "SELECT user_id, action, detail, success, created_at FROM operation_log " +
+                        "ORDER BY created_at DESC LIMIT ?",
+                (rs, rowNum) -> {
+                    Map<String, Object> log = new LinkedHashMap<String, Object>();
+                    log.put("userId", rs.getString("user_id"));
+                    log.put("action", rs.getString("action"));
+                    log.put("detail", rs.getString("detail"));
+                    log.put("success", rs.getInt("success") == 1);
+                    log.put("time", rs.getTimestamp("created_at"));
+                    return log;
+                }, limit);
+    }
+
     private List<BillTraceNode> traceDirection(String id, Map<String, List<String>> edges,
                                                 Map<String, BillTraceNode> nodes, Set<String> visited) {
         List<BillTraceNode> result = new ArrayList<BillTraceNode>();

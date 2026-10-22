@@ -45,3 +45,14 @@ CREATE TABLE IF NOT EXISTS sf_push_log (
   PRIMARY KEY (id),
   KEY idx_bill_time (bill_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS operation_log (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  user_id VARCHAR(64) NOT NULL,
+  action VARCHAR(64) NOT NULL,
+  detail VARCHAR(500) NOT NULL,
+  success TINYINT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_action_time (action, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
