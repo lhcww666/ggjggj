@@ -1,0 +1,99 @@
+# Enterprise Agent & Integration Demo
+
+一个面向企业业务场景的 Java 全栈演示项目，包含：
+
+- **Agent Gateway Demo**：短期用户上下文、工具注册、库存查询、采购草稿、确认执行、幂等和 SSE
+- **Business Integrations Demo**：SSO 单点登录、条码追溯、单据链追溯、顺丰物流模拟
+- **Vue 2 控制台**：在一个页面演示 SSO、条码、单据链和顺丰流程
+
+项目使用 Java 8、Spring Boot 2.7、Vue 2 和 MySQL/Redis 可选配置。
+
+![演示页面](docs/demo.png)
+
+## 目录
+
+```text
+agent-gateway-demo/          AI Agent 工具网关
+business-integrations-demo/  SSO、追溯、顺丰物流
+docs/                        架构、验证记录、面试说明
+```
+
+## 快速开始
+
+### Agent Gateway
+
+```powershell
+cd agent-gateway-demo
+mvn spring-boot:run
+```
+
+默认端口：`8080`
+
+### Business Integrations
+
+```powershell
+cd business-integrations-demo
+mvn spring-boot:run
+```
+
+默认端口：`18081`
+
+打开：
+
+```text
+http://localhost:18081/
+```
+
+### MySQL + Redis 模式
+
+```powershell
+cd business-integrations-demo
+docker compose up -d
+mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
+```
+
+需要 Docker Desktop 正在运行。
+
+## 设计重点
+
+### 1. 模型不直接写业务库
+
+Agent 只负责意图理解和参数准备。Java 负责权限、校验、草稿、确认、幂等和审计。
+
+### 2. 可信用户上下文
+
+模型工具调用不直接接触登录 Token。后端签发短期 `contextId`，工具调用时恢复最小用户上下文。
+
+### 3. 写操作闭环
+
+```text
+validate
+  -> draft
+  -> user confirmation
+  -> idempotent create
+  -> result query
+```
+
+### 4. 企业集成可靠性
+
+- SSO：一次性 code、nonce、timestamp、防重放
+- 条码：事件流 + 单据链递归 + visited 防循环
+- 顺丰：嵌套报文、签名、双层成功判断、运单号回写
+
+## 验证
+
+- Agent Gateway：库存查询、采购草稿、确认创建、重复确认幂等、直接工具调用
+- Business Integrations：SSO 授权/兑换/重放拦截、条码追溯、单据链、顺丰下单/轨迹
+- Vue 页面：真实浏览器 9/9 交互断言通过
+
+详见 [docs/verification.md](docs/verification.md)。
+
+## 边界
+
+这是一个干净室学习与作品集项目：
+
+- 不包含任何公司完整源码
+- 不包含客户数据或生产密钥
+- 不调用真实顺丰接口
+- SSO token 和业务数据均为演示数据
+- 生产使用前需要接入真实认证、数据库、审计和限流
