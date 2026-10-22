@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>企业集成演示台</title>
+  <script src="/vue.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: #f3f6fb; color: #1f2937; }
+    header { padding: 24px 32px; color: #fff; background: linear-gradient(120deg, #173b6c, #2f6fb2); }
+    header h1 { margin: 0 0 8px; font-size: 24px; }
+    header p { margin: 0; opacity: .82; font-size: 14px; }
+    .layout { max-width: 1280px; margin: 24px auto; padding: 0 20px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .tabs button { border: 1px solid #d5dfeb; border-radius: 8px; background: #fff; color: #35506e; padding: 10px 18px; cursor: pointer; }
+    .tabs button.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+    .card { background: #fff; border: 1px solid #e1e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(31, 54, 88, .06); }
+    .card h2 { margin: 0 0 6px; font-size: 18px; }
+    .muted { color: #6b7c93; font-size: 13px; line-height: 1.7; }
+    .form-row { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+    input, select { flex: 1; min-width: 150px; padding: 10px 12px; border: 1px solid #cfdae7; border-radius: 8px; font: inherit; background: #fbfdff; }
+    button.primary { border: 0; border-radius: 8px; padding: 10px 18px; background: #2563eb; color: #fff; cursor: pointer; }
+    button.secondary { border: 1px solid #c8d7e7; border-radius: 8px; padding: 9px 14px; background: #fff; color: #315276; cursor: pointer; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .status { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #eef5ff; color: #24517c; font-size: 13px; word-break: break-all; }
+    .error { background: #fff1f1; color: #b42318; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+    th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #edf1f6; vertical-align: top; }
+    th { color: #64748b; font-weight: 600; background: #f8fafc; }
+    pre { margin: 12px 0 0; padding: 14px; background: #0f172a; color: #dbeafe; border-radius: 10px; overflow: auto; font-size: 12px; line-height: 1.6; max-height: 380px; }
+    .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #eaf2ff; color: #2563eb; font-size: 12px; margin-right: 6px; }
+    .ok { color: #15803d; }
+    .bad { color: #b42318; }
+    footer { max-width: 1280px; margin: 28px auto 50px; padding: 0 20px; color: #8a9ab0; font-size: 12px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>企业集成演示台</h1>
+    <p>SSO 单点登录 · 条码追溯 · 单据链追溯 · 顺丰物流</p>
+  </header>
+
+  <main class="layout">
+    <nav class="tabs">
+      <button :class="{active: active === 'sso'}" @click="active = 'sso'">SSO 单点登录</button>
+      <button :class="{active: active === 'barcode'}" @click="active = 'barcode'">条码追溯</button>
+      <button :class="{active: active === 'bill'}" @click="active = 'bill'">单据链追溯</button>
+      <button :class="{active: active === 'sf'}" @click="active = 'sf'">顺丰物流</button>
+    </nav>
+
+    <div v-if="error" class="status error">{{ error }}</div>
+
+    <section v-if="active === 'sso'" class="grid">
+      <div class="card">
+        <h2>生成一次性登录链接</h2>
+        <p class="muted">演示环境由服务端生成签名，浏览器不接触 appSecret。</p>
+        <div class="form-row">
+          <select v-model="sso.userId">
+            <option value="ys-user-001">ys-user-001 → local-user-1001</option>
+            <option value="13800000000">13800000000 → local-user-1002</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <select v-model="sso.targetType">
+            <option value="outsourceInStock">委外入库单</option>
+            <option value="receiveInStock">采购入库单</option>
+            <option value="sellOutStockBill">销售出库单</option>
+            <option value="stockOtherOutBill">其他出库单</option>
+            <option value="stockOtherInBill">其他入库单</option>
+            <option value="stockAllocateBill">调拨单</option>
+          </select>
+          <input v-model="sso.targetId" placeholder="目标单据 ID">
+        </div>
+        <button class="primary" :disabled="loading" @click="authorizeSso">生成登录链接</button>
+        <div v-if="ssoResult" class="status" :class="{ok: ssoResult.success}">
+          <div v-if="ssoResult.success">
+            <span class="pill">code</span>{{ ssoResult.data.code }}<br>
+            <span class="pill">有效期</span>{{ ssoResult.data.expiresIn }} 秒<br>
+            <button class="secondary" style="margin-top:10px" @click="openSso">打开登录链接</button>
+          </div>
+          <div v-else class="bad">{{ ssoResult.code }} - {{ ssoResult.message }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>落地页兑换结果</h2>
+        <p class="muted">打开 loginUrl 后，页面会用 code 自动换取 token。code 只能使用一次。</p>
+        <div v-if="ssoLogin" class="status" :class="{ok: ssoLogin.success}">
+          <div v-if="ssoLogin.success">
+            <span class="pill">token</span>{{ ssoLogin.data.token }}<br>
+            <span class="pill">用户</span>{{ ssoLogin.data.user.id }}<br>
+            <span class="pill">目标</span>{{ ssoLogin.data.target.type }} / {{ ssoLogin.data.target.id }}
+          </div>
+          <div v-else class="bad">{{ ssoLogin.code }} - {{ ssoLogin.message }}</div>
+        </div>
+        <div v-else class="status">等待 code 兑换...</div>
+      </div>
+    </section>
+
+    <section v-if="active === 'barcode'" class="card">
+      <h2>条码全生命周期</h2>
+      <p class="muted">查询条码打印、入库、领料、成品入库、销售出库事件。</p>
+      <div class="form-row">
+        <input v-model="barcode" placeholder="例如 BC001">
+        <button class="primary" :disabled="loading" @click="loadBarcode">查询</button>
+      </div>
+      <div v-if="barcodeResult" class="status">
+        <span class="pill">条码</span>{{ barcodeResult.barcode }}
+        <span class="pill">事件数</span>{{ barcodeResult.totalEvents }}
+        <span class="pill">found</span>{{ barcodeResult.found }}
+      </div>
+      <table v-if="barcodeResult && barcodeResult.events.length">
+        <thead><tr><th>时间</th><th>业务</th><th>操作</th><th>单据</th><th>仓库</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr v-for="event in barcodeResult.events" :key="event.businessTime + event.billNo">
+            <td>{{ event.businessTime }}</td>
+            <td>{{ event.businessName }}</td>
+            <td>{{ event.operationType }}</td>
+            <td>{{ event.billNo }}</td>
+            <td>{{ event.warehouse }}</td>
+            <td :class="event.recordStatus === 'SUCCESS' ? 'ok' : 'bad'">{{ event.recordStatus }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section v-if="active === 'bill'" class="card">
+      <h2>单据链追溯</h2>
+      <p class="muted">递归查询上下游，visited 集合防止循环。</p>
+      <div class="form-row">
+        <select v-model="bill.billType">
+          <option value="SALES_ORDER">销售订单</option>
+          <option value="PRODUCTION_ORDER">生产订单</option>
+          <option value="QUALITY_TEST">质检单</option>
+          <option value="RECEIVE_IN_STOCK">采购入库单</option>
+          <option value="BARCODE">条码</option>
+        </select>
+        <input v-model="bill.id" placeholder="例如 SO-1001">
+        <button class="primary" :disabled="loading" @click="loadBill">追溯</button>
+      </div>
+      <pre v-if="billTrace">{{ billTraceJson }}</pre>
+      <div v-else class="status">请输入单据类型和 ID。</div>
+    </section>
+
+    <section v-if="active === 'sf'" class="grid">
+      <div class="card">
+        <h2>顺丰下单</h2>
+        <p class="muted">演示报文组装、签名、双层校验和运单号幂等。</p>
+        <div class="form-row"><input v-model="sf.dispatchBillId" placeholder="发货单 ID"></div>
+        <div class="form-row"><input v-model="sf.receiverName" placeholder="收件人"></div>
+        <div class="form-row"><input v-model="sf.receiverPhone" placeholder="手机号"></div>
+        <div class="form-row"><input v-model="sf.receiverAddress" placeholder="地址"></div>
+        <div class="form-row">
+          <input v-model="sf.cargoName" placeholder="货品">
+          <input v-model.number="sf.quantity" type="number" min="1" placeholder="数量">
+        </div>
+        <label class="muted"><input v-model="sf.failBusiness" type="checkbox" style="min-width:auto"> 模拟业务失败</label>
+        <div class="form-row">
+          <button class="primary" :disabled="loading" @click="createSfOrder">下单</button>
+          <button class="secondary" @click="loadSfLogs">刷新日志</button>
+        </div>
+        <div v-if="sfResult" class="status" :class="{ok: sfResult.success}">
+          <div v-if="sfResult.success">
+            <span class="pill">运单号</span>{{ sfResult.waybillNo }}<br>
+            <span class="pill">幂等</span>{{ sfResult.idempotent }}
+            <button class="secondary" style="margin-left:8px" @click="loadRoute">查轨迹</button>
+          </div>
+          <div v-else class="bad">{{ sfResult.code }} - {{ sfResult.message }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>轨迹与推送日志</h2>
+        <div v-if="routeResult" class="status">
+          <span class="pill">运单</span>{{ routeResult.waybillNo }}
+          <table>
+            <thead><tr><th>时间</th><th>状态</th><th>地点</th></tr></thead>
+            <tbody><tr v-for="item in routeResult.routes" :key="item.time"><td>{{ item.time }}</td><td>{{ item.status }}</td><td>{{ item.address }}</td></tr></tbody>
+          </table>
+        </div>
+        <div v-else class="muted">下单后可以查询轨迹。</div>
+        <table v-if="sfLogs.length">
+          <thead><tr><th>单据</th><th>服务</th><th>结果</th><th>成功</th></tr></thead>
+          <tbody><tr v-for="(log, index) in sfLogs" :key="index"><td>{{ log.billId }}</td><td>{{ log.service }}</td><td>{{ log.result }}</td><td>{{ log.success }}</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>干净室演示项目 · 不包含公司业务代码、客户数据和生产密钥</footer>
+</div>
+
+<script>
+new Vue({
+  el: '#app',
+  data: {
+    active: 'sso',
+    loading: false,
+    error: '',
+    sso: { userId: 'ys-user-001', targetType: 'receiveInStock', targetId: 'RIS-1001' },
+    ssoResult: null,
+    ssoLogin: null,
+    barcode: 'BC001',
+    barcodeResult: null,
+    bill: { billType: 'SALES_ORDER', id: 'SO-1001' },
+    billTrace: null,
+    sf: { dispatchBillId: 'CK-1001', receiverName: '张三', receiverPhone: '13800000000', receiverAddress: '上海市浦东新区', cargoName: '样品', quantity: 2, failBusiness: false },
+    sfResult: null,
+    routeResult: null,
+    sfLogs: []
+  },
+  computed: {
+    billTraceJson() { return this.billTrace ? JSON.stringify(this.billTrace, null, 2) : ''; }
+  },
+  mounted() {
+    this.parseSsoLanding();
+  },
+  methods: {
+    async request(url, options) {
+      const response = await fetch(url, options || {});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || ('HTTP ' + response.status));
+      return data;
+    },
+    async authorizeSso() {
+      this.loading = true; this.error = '';
+      try {
+        this.ssoResult = await this.request('/api/demo/sso/authorize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.sso)
+        });
+      } catch (error) { this.error = error.message; }
+      finally { this.loading = false; }
+    },
+    openSso() {
+      if (this.ssoResult && this.ssoResult.data) window.location.href = this.ssoResult.data.loginUrl;
+    },
+    parseSsoLanding() {
+      const match = window.location.hash.match(/#\/sso\/login\?code=([^&]+)/);
+      if (!match) return;
+      this.active = 'sso';
+      this.exchangeSso(decodeURIComponent(match[1]));
+    },
+    async exchangeSso(code) {
+      try {
+        this.ssoLogin = await this.request('/api/sso/exchange?code=' + encodeURIComponent(code));
+      } catch (error) { this.error = error.message; }
+    },
+    async loadBarcode() {
+      this.loading = true; this.error = '';
+      try {
+        const result = await this.request('/api/v1/barcodeFlowRecord/trace/' + encodeURIComponent(this.barcode));
+        this.barcodeResult = result.data;
+      } catch (error) { this.error = error.message; }
+      finally { this.loading = false; }
+    },
+    async loadBill() {
+      this.loading = true; this.error = '';
+      try {
+        const result = await this.request('/api/v1/billtrace?billType=' + encodeURIComponent(this.bill.billType) + '&id=' + encodeURIComponent(this.bill.id));
+        this.billTrace = result.data;
+      } catch (error) { this.error = error.message; }
+      finally { this.loading = false; }
+    },
+    async createSfOrder() {
+      this.loading = true; this.error = ''; this.routeResult = null;
+      try {
+        this.sfResult = await this.request('/api/sf/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.sf)
+        });
+        await this.loadSfLogs();
+      } catch (error) { this.error = error.message; }
+      finally { this.loading = false; }
+    },
+    async loadRoute() {
+      if (!this.sfResult || !this.sfResult.waybillNo) return;
+      try {
+        this.routeResult = await this.request('/api/sf/route/' + encodeURIComponent(this.sfResult.waybillNo));
+      } catch (error) { this.error = error.message; }
+    },
+    async loadSfLogs() {
+      try { this.sfLogs = await this.request('/api/sf/logs'); } catch (error) { this.error = error.message; }
+    }
+  }
+});
+</script>
+</body>
+</html>
