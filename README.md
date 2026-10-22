@@ -4,11 +4,14 @@
 
 - **Agent Gateway Demo**：短期用户上下文、工具注册、库存查询、采购草稿、确认执行、幂等和 SSE
 - **Business Integrations Demo**：SSO 单点登录、条码追溯、单据链追溯、顺丰物流模拟
+- **RAG Knowledge Base**：文档切分、关键词/字符 n-gram 检索、引用来源、权限过滤和评测
 - **Vue 2 控制台**：在一个页面演示 SSO、条码、单据链和顺丰流程
 
 项目使用 Java 8、Spring Boot 2.7、Vue 2 和 MySQL/Redis 可选配置。
 
 ![演示页面](docs/auth-demo.png)
+
+![RAG 知识库](docs/rag-demo.png)
 
 ## 目录
 
@@ -80,6 +83,15 @@ validate
 - 条码：事件流 + 单据链递归 + visited 防循环
 - 顺丰：嵌套报文、签名、双层成功判断、运单号回写
 
+### 5. RAG
+
+- 文档按固定窗口切分，带重叠
+- 关键词和中文双字 n-gram 检索
+- 可见范围：PUBLIC / OPERATOR / ADMIN
+- 返回引用片段和分数
+- 内置 5 条评测问题
+- 当前答案由可解释模板生成，可替换为 Dify 或任意 LLM
+
 ## 演示登录
 
 | 账号 | 密码 | 角色 |
@@ -94,11 +106,13 @@ validate
 - 业务员：SSO、条码、单据链、顺丰
 - 查看者：SSO、条码、单据链
 
+所有角色还可以使用“知识库 RAG”页签；管理员可以上传文档、删除文档和运行评测。
+
 ## 验证
 
 - Agent Gateway：库存查询、采购草稿、确认创建、重复确认幂等、直接工具调用
 - Business Integrations：SSO 授权/兑换/重放拦截、条码追溯、单据链、顺丰下单/轨迹
-- Vue 页面：真实浏览器 9/9 交互断言通过
+- Vue 页面：真实浏览器 20/20 交互断言通过
 
 详见 [docs/verification.md](docs/verification.md)。
 

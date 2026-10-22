@@ -73,3 +73,17 @@ Web / Agent UI
 - `/api/sf/**` -> `SF`
 - `/api/v1/billtrace` -> `BILLTRACE`
 - `/api/admin/**` -> `AUDIT`
+
+## RAG
+
+```text
+文档
+  -> 固定窗口切分（带重叠）
+  -> 关键词 + 中文双字 n-gram 索引
+  -> 按角色过滤可见文档
+  -> TopK 检索
+  -> 引用片段 + 模板答案
+```
+
+当前不依赖外部向量库；生产环境可以把本地检索替换为
+Embedding + 向量数据库 + Rerank，并保留相同的权限过滤和引用协议。

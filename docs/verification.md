@@ -34,6 +34,10 @@ API 验证：
 - 操作日志查询
 - 查看者菜单裁剪
 - SSO 登录并进入业务员菜单
-- 16/16 断言通过
+- RAG 公开文档检索
+- RAG 管理员文档管理
+- RAG 权限过滤（查看者看不到 OPERATOR/ADMIN 文档）
+- RAG 评测 1.0 命中率
+- 20/20 断言通过
 
 > MySQL/Redis 模式已提供 Docker Compose 和 SQL 初始化脚本；当前验证环境 Docker daemon 未启动，因此该模式只完成编译和配置校验。
