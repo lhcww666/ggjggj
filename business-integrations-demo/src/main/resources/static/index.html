@@ -196,7 +196,7 @@
     <section v-if="active === 'rag'" class="grid">
       <div class="card">
         <h2>知识库 RAG 问答</h2>
-        <p class="muted">本地切分 + 关键词/字符 n-gram 检索 + 引用来源；当前答案由可解释模板生成，可替换为 Dify/LLM。</p>
+        <p class="muted">本地切分 + 关键词/字符 n-gram + 哈希 embedding 混合检索 + 引用来源；当前答案由可解释模板生成，可替换为 Dify/LLM。</p>
         <div class="form-row"><textarea v-model="rag.query" placeholder="例如：采购单重复创建怎么办？"></textarea></div>
         <div class="form-row">
           <input v-model.number="rag.topK" type="number" min="1" max="10" placeholder="TopK">
@@ -205,13 +205,13 @@
         <div v-if="ragResult" class="status" style="white-space:pre-wrap">{{ ragResult.answer }}</div>
         <table v-if="ragResult && ragResult.sources.length">
           <thead><tr><th>来源</th><th>分数</th><th>片段</th></tr></thead>
-          <tbody><tr v-for="source in ragResult.sources" :key="source.documentId + source.score"><td>{{ source.title }}<br><small>{{ source.visibility }}</small></td><td>{{ source.score }}</td><td>{{ source.snippet }}</td></tr></tbody>
+          <tbody><tr v-for="source in ragResult.sources" :key="source.documentId + source.score"><td>{{ source.title }}<br><small>{{ source.visibility }}</small></td><td>{{ source.score }}<br><small>K {{ source.keywordScore }} / V {{ source.vectorScore }}</small></td><td>{{ source.snippet }}</td></tr></tbody>
         </table>
       </div>
 
       <div class="card" v-if="can('RAG_ADMIN')">
         <h2>知识库管理</h2>
-        <p class="muted">管理员可以上传 txt/md 文档、设置可见范围并运行评测。</p>
+        <p class="muted">管理员可以上传 txt/md/docx 文档、设置可见范围并运行评测。</p>
         <div class="form-row"><input v-model="ragUploadTitle" placeholder="文档标题"></div>
         <div class="form-row">
           <select v-model="ragUploadVisibility">
@@ -219,7 +219,7 @@
             <option value="OPERATOR">OPERATOR - 业务员/管理员</option>
             <option value="ADMIN">ADMIN - 仅管理员</option>
           </select>
-          <input ref="ragFile" type="file" accept=".txt,.md">
+          <input ref="ragFile" type="file" accept=".txt,.md,.docx">
         </div>
         <div class="form-row"><button class="primary" :disabled="loading" @click="uploadRag">上传文档</button><button class="secondary" @click="loadRagDocuments">刷新文档</button><button class="secondary" @click="evaluateRag">运行评测</button></div>
         <div v-if="ragEvaluation" class="status">

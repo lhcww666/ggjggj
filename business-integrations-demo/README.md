@@ -134,7 +134,8 @@ GET  /api/rag/evaluate
 特点：
 
 - 文档切分带重叠
-- 关键词 + 中文双字 n-gram 检索
+- 关键词 + 中文双字 n-gram + 哈希 embedding 混合检索
+- 支持 txt / md / docx 文档
 - PUBLIC / OPERATOR / ADMIN 可见范围
 - 返回引用标题、分数和片段
 - 管理员上传/删除文档和运行评测
