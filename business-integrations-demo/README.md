@@ -6,6 +6,7 @@
 - 条码全生命周期追溯
 - 单据链上下游追溯
 - 顺丰物流下单、取消、轨迹和推送日志
+- RAG 知识库问答
 - Vue 2 演示页面
 - MySQL/Redis 可选模式
 
@@ -117,6 +118,33 @@ GET  /api/sf/logs
 - 网关层 + 业务层双层成功判断
 - 重复发货单返回已有运单号
 - 轨迹查询和推送日志
+
+## RAG 知识库
+
+```text
+POST /api/rag/ask
+POST /api/rag/ask/stream
+GET  /api/rag/documents
+POST /api/rag/documents       (multipart, txt/md)
+POST /api/rag/documents/text
+DELETE /api/rag/documents/{id}
+GET  /api/rag/evaluate
+```
+
+特点：
+
+- 文档切分带重叠
+- 关键词 + 中文双字 n-gram 检索
+- PUBLIC / OPERATOR / ADMIN 可见范围
+- 返回引用标题、分数和片段
+- 管理员上传/删除文档和运行评测
+- 本地模板生成答案，不依赖外部 LLM Key
+
+权限：
+
+- 所有角色可以查询
+- 管理员可以上传、删除和评测
+- 查看者只能检索 PUBLIC 文档
 
 ## 边界
 

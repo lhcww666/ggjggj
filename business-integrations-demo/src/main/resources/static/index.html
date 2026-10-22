@@ -23,7 +23,8 @@
     .card h2 { margin: 0 0 6px; font-size: 18px; }
     .muted { color: #6b7c93; font-size: 13px; line-height: 1.7; }
     .form-row { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
-    input, select { flex: 1; min-width: 150px; padding: 10px 12px; border: 1px solid #cfdae7; border-radius: 8px; font: inherit; background: #fbfdff; }
+    input, select, textarea { flex: 1; min-width: 150px; padding: 10px 12px; border: 1px solid #cfdae7; border-radius: 8px; font: inherit; background: #fbfdff; }
+    textarea { min-height: 90px; resize: vertical; }
     button.primary { border: 0; border-radius: 8px; padding: 10px 18px; background: #2563eb; color: #fff; cursor: pointer; }
     button.secondary { border: 1px solid #c8d7e7; border-radius: 8px; padding: 9px 14px; background: #fff; color: #315276; cursor: pointer; }
     button:disabled { opacity: .55; cursor: not-allowed; }
@@ -82,7 +83,7 @@
   <main v-if="loggedIn" class="layout">
     <div v-if="error" class="status error">{{ error }}</div>
     <nav class="tabs">
-      <button v-for="tab in tabs" :key="tab.key" :class="{active: active === tab.key}" @click="active = tab.key">{{ tab.label }}</button>
+      <button v-for="tab in tabs" :key="tab.key" :class="{active: active === tab.key}" @click="selectTab(tab.key)">{{ tab.label }}</button>
     </nav>
 
     <section v-if="active === 'sso'" class="grid">
@@ -192,6 +193,45 @@
       </div>
     </section>
 
+    <section v-if="active === 'rag'" class="grid">
+      <div class="card">
+        <h2>知识库 RAG 问答</h2>
+        <p class="muted">本地切分 + 关键词/字符 n-gram 检索 + 引用来源；当前答案由可解释模板生成，可替换为 Dify/LLM。</p>
+        <div class="form-row"><textarea v-model="rag.query" placeholder="例如：采购单重复创建怎么办？"></textarea></div>
+        <div class="form-row">
+          <input v-model.number="rag.topK" type="number" min="1" max="10" placeholder="TopK">
+          <button class="primary" :disabled="loading" @click="askRag">提问</button>
+        </div>
+        <div v-if="ragResult" class="status" style="white-space:pre-wrap">{{ ragResult.answer }}</div>
+        <table v-if="ragResult && ragResult.sources.length">
+          <thead><tr><th>来源</th><th>分数</th><th>片段</th></tr></thead>
+          <tbody><tr v-for="source in ragResult.sources" :key="source.documentId + source.score"><td>{{ source.title }}<br><small>{{ source.visibility }}</small></td><td>{{ source.score }}</td><td>{{ source.snippet }}</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card" v-if="can('RAG_ADMIN')">
+        <h2>知识库管理</h2>
+        <p class="muted">管理员可以上传 txt/md 文档、设置可见范围并运行评测。</p>
+        <div class="form-row"><input v-model="ragUploadTitle" placeholder="文档标题"></div>
+        <div class="form-row">
+          <select v-model="ragUploadVisibility">
+            <option value="PUBLIC">PUBLIC - 所有人</option>
+            <option value="OPERATOR">OPERATOR - 业务员/管理员</option>
+            <option value="ADMIN">ADMIN - 仅管理员</option>
+          </select>
+          <input ref="ragFile" type="file" accept=".txt,.md">
+        </div>
+        <div class="form-row"><button class="primary" :disabled="loading" @click="uploadRag">上传文档</button><button class="secondary" @click="loadRagDocuments">刷新文档</button><button class="secondary" @click="evaluateRag">运行评测</button></div>
+        <div v-if="ragEvaluation" class="status">
+          评测命中率：{{ (ragEvaluation.hitRate * 100).toFixed(0) }}%（{{ ragEvaluation.hits }}/{{ ragEvaluation.total }}）
+        </div>
+        <table v-if="ragDocuments.length">
+          <thead><tr><th>标题</th><th>可见范围</th><th>操作</th></tr></thead>
+          <tbody><tr v-for="document in ragDocuments" :key="document.id"><td>{{ document.title }}</td><td>{{ document.visibility }}</td><td><button class="secondary" @click="deleteRag(document.id)">删除</button></td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <section v-if="active === 'logs'" class="card">
       <h2>操作日志</h2>
       <p class="muted">仅管理员可查看登录、SSO 和顺丰操作记录。</p>
@@ -222,6 +262,12 @@ new Vue({
     barcodeResult: null,
     bill: { billType: 'SALES_ORDER', id: 'SO-1001' },
     billTrace: null,
+    rag: { query: '采购单重复创建怎么办？', topK: 3 },
+    ragResult: null,
+    ragDocuments: [],
+    ragUploadTitle: '',
+    ragUploadVisibility: 'PUBLIC',
+    ragEvaluation: null,
     sf: { dispatchBillId: 'CK-1001', receiverName: '张三', receiverPhone: '13800000000', receiverAddress: '上海市浦东新区', cargoName: '样品', quantity: 2, failBusiness: false },
     sfResult: null,
     routeResult: null,
@@ -237,6 +283,7 @@ new Vue({
       if (this.can('BARCODE')) result.push({ key: 'barcode', label: '条码追溯' })
       if (this.can('BILLTRACE')) result.push({ key: 'bill', label: '单据链追溯' })
       if (this.can('SF')) result.push({ key: 'sf', label: '顺丰物流' })
+      if (this.can('RAG')) result.push({ key: 'rag', label: '知识库 RAG' })
       if (this.can('AUDIT')) result.push({ key: 'logs', label: '操作日志' })
       return result
     }
@@ -250,6 +297,10 @@ new Vue({
     window.removeEventListener('hashchange', this.parseSsoLanding)
   },
   methods: {
+    selectTab(key) {
+      this.active = key
+      if (key === 'rag') this.loadRagDocuments()
+    },
     async parseSsoLanding() {
     const match = window.location.hash.match(/#\/sso\/login\?code=([^&]+)/)
     if (match) {
@@ -353,6 +404,53 @@ new Vue({
       try { const result = await this.request('/api/v1/billtrace?billType=' + encodeURIComponent(this.bill.billType) + '&id=' + encodeURIComponent(this.bill.id)); this.billTrace = result.data }
       catch (error) { this.error = error.message }
       finally { this.loading = false }
+    },
+    async askRag() {
+      this.loading = true; this.error = ''
+      try {
+        const result = await this.request('/api/rag/ask', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.rag)
+        })
+        this.ragResult = result.data
+      } catch (error) { this.error = error.message }
+      finally { this.loading = false }
+    },
+    async loadRagDocuments() {
+      if (!this.can('RAG')) return
+      try {
+        const result = await this.request('/api/rag/documents')
+        this.ragDocuments = result.data
+      } catch (error) { this.error = error.message }
+    },
+    async uploadRag() {
+      const file = this.$refs.ragFile && this.$refs.ragFile.files[0]
+      if (!file) { this.error = '请选择 txt 或 md 文件'; return }
+      if (!this.ragUploadTitle.trim()) { this.error = '请输入文档标题'; return }
+      this.loading = true; this.error = ''
+      try {
+        const form = new FormData()
+        form.append('title', this.ragUploadTitle)
+        form.append('visibility', this.ragUploadVisibility)
+        form.append('file', file)
+        await this.request('/api/rag/documents', { method: 'POST', body: form })
+        this.ragUploadTitle = ''
+        if (this.$refs.ragFile) this.$refs.ragFile.value = ''
+        await this.loadRagDocuments()
+      } catch (error) { this.error = error.message }
+      finally { this.loading = false }
+    },
+    async deleteRag(id) {
+      if (!window.confirm('确认删除这个知识文档？')) return
+      try {
+        await this.request('/api/rag/documents/' + encodeURIComponent(id), { method: 'DELETE' })
+        await this.loadRagDocuments()
+      } catch (error) { this.error = error.message }
+    },
+    async evaluateRag() {
+      try {
+        const result = await this.request('/api/rag/evaluate')
+        this.ragEvaluation = result.data
+      } catch (error) { this.error = error.message }
     },
     async createSfOrder() {
       this.loading = true; this.error = ''; this.routeResult = null
