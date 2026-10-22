@@ -50,3 +50,26 @@ Web / Agent UI
   -> 运单号回写
   -> 轨迹 / 推送日志
 ```
+
+## Auth and Permissions
+
+```text
+登录 / SSO exchange
+  -> AuthSession token
+  -> 角色
+  -> 菜单权限
+  -> 后端接口拦截
+  -> 操作日志
+```
+
+演示角色：
+
+- ADMIN：全部菜单和操作日志
+- OPERATOR：SSO、条码、单据链、顺丰
+- VIEWER：SSO、条码、单据链
+
+接口权限：
+
+- `/api/sf/**` -> `SF`
+- `/api/v1/billtrace` -> `BILLTRACE`
+- `/api/admin/**` -> `AUDIT`

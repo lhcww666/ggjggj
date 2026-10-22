@@ -8,7 +8,7 @@
 
 项目使用 Java 8、Spring Boot 2.7、Vue 2 和 MySQL/Redis 可选配置。
 
-![演示页面](docs/demo.png)
+![演示页面](docs/auth-demo.png)
 
 ## 目录
 
@@ -79,6 +79,20 @@ validate
 - SSO：一次性 code、nonce、timestamp、防重放
 - 条码：事件流 + 单据链递归 + visited 防循环
 - 顺丰：嵌套报文、签名、双层成功判断、运单号回写
+
+## 演示登录
+
+| 账号 | 密码 | 角色 |
+|---|---|---|
+| `admin` | `admin123` | 管理员 |
+| `operator` | `operator123` | 业务员 |
+| `viewer` | `viewer123` | 查看者 |
+
+不同角色会看到不同菜单；管理员可以查看操作日志。
+
+- 管理员：SSO、条码、单据链、顺丰、操作日志
+- 业务员：SSO、条码、单据链、顺丰
+- 查看者：SSO、条码、单据链
 
 ## 验证
 
