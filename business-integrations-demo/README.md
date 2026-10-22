@@ -135,11 +135,25 @@ GET  /api/rag/evaluate
 
 - 文档切分带重叠
 - 关键词 + 中文双字 n-gram + 哈希 embedding 混合检索
-- 支持 txt / md / docx 文档
+- 支持 txt / md / docx / pdf 文档
 - PUBLIC / OPERATOR / ADMIN 可见范围
 - 返回引用标题、分数和片段
 - 管理员上传/删除文档和运行评测
 - 本地模板生成答案，不依赖外部 LLM Key
+
+可选 LLM 配置：
+
+```yaml
+rag:
+  llm:
+    enabled: true
+    base-url: https://api.openai.com/v1
+    api-key: ${RAG_LLM_API_KEY}
+    model: gpt-4o-mini
+    timeout-seconds: 30
+```
+
+LLM 调用失败时自动回退到模板回答。`GET /api/rag/info` 会返回当前检索和回答模式。
 
 权限：
 

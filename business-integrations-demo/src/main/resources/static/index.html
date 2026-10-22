@@ -197,6 +197,9 @@
       <div class="card">
         <h2>知识库 RAG 问答</h2>
         <p class="muted">本地切分 + 关键词/字符 n-gram + 哈希 embedding 混合检索 + 引用来源；当前答案由可解释模板生成，可替换为 Dify/LLM。</p>
+        <div v-if="ragInfo" class="status">
+          检索：{{ ragInfo.retrieval }} · 回答：{{ ragInfo.answerMode }}
+        </div>
         <div class="form-row"><textarea v-model="rag.query" placeholder="例如：采购单重复创建怎么办？"></textarea></div>
         <div class="form-row">
           <input v-model.number="rag.topK" type="number" min="1" max="10" placeholder="TopK">
@@ -211,7 +214,7 @@
 
       <div class="card" v-if="can('RAG_ADMIN')">
         <h2>知识库管理</h2>
-        <p class="muted">管理员可以上传 txt/md/docx 文档、设置可见范围并运行评测。</p>
+        <p class="muted">管理员可以上传 txt/md/docx/pdf 文档、设置可见范围并运行评测。</p>
         <div class="form-row"><input v-model="ragUploadTitle" placeholder="文档标题"></div>
         <div class="form-row">
           <select v-model="ragUploadVisibility">
@@ -219,7 +222,7 @@
             <option value="OPERATOR">OPERATOR - 业务员/管理员</option>
             <option value="ADMIN">ADMIN - 仅管理员</option>
           </select>
-          <input ref="ragFile" type="file" accept=".txt,.md,.docx">
+          <input ref="ragFile" type="file" accept=".txt,.md,.docx,.pdf">
         </div>
         <div class="form-row"><button class="primary" :disabled="loading" @click="uploadRag">上传文档</button><button class="secondary" @click="loadRagDocuments">刷新文档</button><button class="secondary" @click="evaluateRag">运行评测</button></div>
         <div v-if="ragEvaluation" class="status">
@@ -264,6 +267,7 @@ new Vue({
     billTrace: null,
     rag: { query: '采购单重复创建怎么办？', topK: 3 },
     ragResult: null,
+    ragInfo: null,
     ragDocuments: [],
     ragUploadTitle: '',
     ragUploadVisibility: 'PUBLIC',
@@ -299,7 +303,10 @@ new Vue({
   methods: {
     selectTab(key) {
       this.active = key
-      if (key === 'rag') this.loadRagDocuments()
+      if (key === 'rag') {
+        this.loadRagDocuments()
+        this.loadRagInfo()
+      }
     },
     async parseSsoLanding() {
     const match = window.location.hash.match(/#\/sso\/login\?code=([^&]+)/)
@@ -420,6 +427,12 @@ new Vue({
       try {
         const result = await this.request('/api/rag/documents')
         this.ragDocuments = result.data
+      } catch (error) { this.error = error.message }
+    },
+    async loadRagInfo() {
+      try {
+        const result = await this.request('/api/rag/info')
+        this.ragInfo = result.data
       } catch (error) { this.error = error.message }
     },
     async uploadRag() {
