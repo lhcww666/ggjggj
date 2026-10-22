@@ -4,7 +4,7 @@
 
 - **Agent Gateway Demo**：短期用户上下文、工具注册、库存查询、采购草稿、确认执行、幂等和 SSE
 - **Business Integrations Demo**：SSO 单点登录、条码追溯、单据链追溯、顺丰物流模拟
-- **RAG Knowledge Base**：文档切分、关键词/字符 n-gram 检索、引用来源、权限过滤和评测
+- **RAG Knowledge Base**：文档切分、关键词 + 哈希 embedding 混合检索、引用来源、权限过滤和评测
 - **Vue 2 控制台**：在一个页面演示 SSO、条码、单据链和顺丰流程
 
 项目使用 Java 8、Spring Boot 2.7、Vue 2 和 MySQL/Redis 可选配置。
@@ -86,7 +86,8 @@ validate
 ### 5. RAG
 
 - 文档按固定窗口切分，带重叠
-- 关键词和中文双字 n-gram 检索
+- 关键词、中文双字 n-gram 和哈希 embedding 混合检索
+- 支持 txt / md / docx 文档
 - 可见范围：PUBLIC / OPERATOR / ADMIN
 - 返回引用片段和分数
 - 内置 5 条评测问题
