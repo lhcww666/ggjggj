@@ -32,7 +32,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             write(response, HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "请先登录");
             return false;
         }
-        String required = requiredPermission(path);
+        String required = requiredPermission(path, request.getMethod());
         if (required != null && !session.getPermissions().contains(required)) {
             write(response, HttpStatus.FORBIDDEN, "FORBIDDEN", "当前角色无权访问: " + required);
             return false;
@@ -48,10 +48,13 @@ public class AuthInterceptor implements HandlerInterceptor {
                 || path.startsWith("/api/v1/barcodeFlowRecord/trace/");
     }
 
-    private String requiredPermission(String path) {
+    private String requiredPermission(String path, String method) {
         if (path.startsWith("/api/sf/")) return "SF";
         if (path.startsWith("/api/v1/billtrace")) return "BILLTRACE";
         if (path.startsWith("/api/admin/")) return "AUDIT";
+        if (path.startsWith("/api/rag/evaluate")) return "RAG_ADMIN";
+        if (path.startsWith("/api/rag/documents") && !"GET".equalsIgnoreCase(method)) return "RAG_ADMIN";
+        if (path.startsWith("/api/rag/")) return "RAG";
         return null;
     }
 

@@ -77,12 +77,12 @@ public class AuthService {
 
     private List<String> permissions(String role) {
         if ("ADMIN".equals(role)) {
-            return Arrays.asList("SSO", "BARCODE", "BILLTRACE", "SF", "AUDIT", "ADMIN");
+            return Arrays.asList("SSO", "BARCODE", "BILLTRACE", "SF", "RAG", "RAG_ADMIN", "AUDIT", "ADMIN");
         }
         if ("OPERATOR".equals(role)) {
-            return Arrays.asList("SSO", "BARCODE", "BILLTRACE", "SF");
+            return Arrays.asList("SSO", "BARCODE", "BILLTRACE", "SF", "RAG");
         }
-        return Arrays.asList("SSO", "BARCODE", "BILLTRACE");
+        return Arrays.asList("SSO", "BARCODE", "BILLTRACE", "RAG");
     }
 
     public static final class DemoUser {
