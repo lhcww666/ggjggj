@@ -24,6 +24,23 @@ http://localhost:18081/
 
 默认使用内存存储，不需要 MySQL 和 Redis。
 
+## 演示账号与权限
+
+| 账号 | 密码 | 角色 | 可见菜单 |
+|---|---|---|---|
+| `admin` | `admin123` | 管理员 | SSO、条码、单据链、顺丰、操作日志 |
+| `operator` | `operator123` | 业务员 | SSO、条码、单据链、顺丰 |
+| `viewer` | `viewer123` | 查看者 | SSO、条码、单据链 |
+
+登录后：
+
+- 页签按角色动态显示
+- 顺丰接口需要 `SF` 权限
+- 单据链接口需要 `BILLTRACE` 权限
+- 操作日志接口需要 `AUDIT` 权限
+
+登录页也可以点击“SSO 演示登录”，走一次性 code 换取 token 的完整链路。
+
 ## MySQL + Redis
 
 ```powershell

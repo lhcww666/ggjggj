@@ -8,9 +8,12 @@
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: "Microsoft YaHei", "Segoe UI", sans-serif; background: #f3f6fb; color: #1f2937; }
-    header { padding: 24px 32px; color: #fff; background: linear-gradient(120deg, #173b6c, #2f6fb2); }
-    header h1 { margin: 0 0 8px; font-size: 24px; }
+    header { padding: 22px 32px; color: #fff; background: linear-gradient(120deg, #173b6c, #2f6fb2); }
+    header h1 { margin: 0 0 6px; font-size: 24px; }
     header p { margin: 0; opacity: .82; font-size: 14px; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; gap: 18px; }
+    .user-box { text-align: right; font-size: 13px; }
+    .user-box button { margin-left: 10px; border: 1px solid rgba(255,255,255,.55); background: transparent; color: #fff; border-radius: 6px; padding: 6px 10px; cursor: pointer; }
     .layout { max-width: 1280px; margin: 24px auto; padding: 0 20px; }
     .tabs { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
     .tabs button { border: 1px solid #d5dfeb; border-radius: 8px; background: #fff; color: #35506e; padding: 10px 18px; cursor: pointer; }
@@ -33,30 +36,59 @@
     .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #eaf2ff; color: #2563eb; font-size: 12px; margin-right: 6px; }
     .ok { color: #15803d; }
     .bad { color: #b42318; }
+    .login-wrap { min-height: calc(100vh - 132px); display: grid; place-items: center; padding: 24px; }
+    .login-card { width: min(440px, 100%); background: #fff; border: 1px solid #e1e8f0; border-radius: 14px; padding: 28px; box-shadow: 0 20px 50px rgba(23, 59, 108, .14); }
+    .login-card h2 { margin: 0 0 8px; }
+    .accounts { margin-top: 18px; padding: 12px; border-radius: 8px; background: #f8fafc; color: #64748b; font-size: 12px; line-height: 1.8; }
     footer { max-width: 1280px; margin: 28px auto 50px; padding: 0 20px; color: #8a9ab0; font-size: 12px; }
   </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <h1>企业集成演示台</h1>
-    <p>SSO 单点登录 · 条码追溯 · 单据链追溯 · 顺丰物流</p>
+    <div class="header-row">
+      <div>
+        <h1>企业集成演示台</h1>
+        <p>SSO 单点登录 · 条码追溯 · 单据链追溯 · 顺丰物流</p>
+      </div>
+      <div v-if="loggedIn" class="user-box">
+        <div>{{ auth.user.displayName }} / {{ auth.user.role }}</div>
+        <button @click="logout">退出登录</button>
+      </div>
+    </div>
   </header>
 
-  <main class="layout">
-    <nav class="tabs">
-      <button :class="{active: active === 'sso'}" @click="active = 'sso'">SSO 单点登录</button>
-      <button :class="{active: active === 'barcode'}" @click="active = 'barcode'">条码追溯</button>
-      <button :class="{active: active === 'bill'}" @click="active = 'bill'">单据链追溯</button>
-      <button :class="{active: active === 'sf'}" @click="active = 'sf'">顺丰物流</button>
-    </nav>
+  <main v-if="!loggedIn" class="login-wrap">
+    <div class="login-card">
+      <h2>登录演示台</h2>
+      <p class="muted">不同账号对应不同菜单权限。</p>
+      <div class="form-row"><input v-model="loginForm.username" placeholder="用户名"></div>
+      <div class="form-row"><input v-model="loginForm.password" type="password" placeholder="密码" @keyup.enter="loginLocal"></div>
+      <div class="form-row">
+        <button class="primary" :disabled="loading" @click="loginLocal">本地登录</button>
+        <button class="secondary" :disabled="loading" @click="ssoDemoLogin">SSO 演示登录</button>
+      </div>
+      <div v-if="loginError" class="status error">{{ loginError }}</div>
+      <div v-if="ssoLoading" class="status">正在用一次性 code 换取登录态...</div>
+      <div class="accounts">
+        演示账号：<br>
+        admin / admin123（管理员）<br>
+        operator / operator123（业务员）<br>
+        viewer / viewer123（查看者）
+      </div>
+    </div>
+  </main>
 
+  <main v-if="loggedIn" class="layout">
     <div v-if="error" class="status error">{{ error }}</div>
+    <nav class="tabs">
+      <button v-for="tab in tabs" :key="tab.key" :class="{active: active === tab.key}" @click="active = tab.key">{{ tab.label }}</button>
+    </nav>
 
     <section v-if="active === 'sso'" class="grid">
       <div class="card">
         <h2>生成一次性登录链接</h2>
-        <p class="muted">演示环境由服务端生成签名，浏览器不接触 appSecret。</p>
+        <p class="muted">服务端生成签名，浏览器不接触 appSecret。</p>
         <div class="form-row">
           <select v-model="sso.userId">
             <option value="ys-user-001">ys-user-001 → local-user-1001</option>
@@ -84,14 +116,14 @@
           <div v-else class="bad">{{ ssoResult.code }} - {{ ssoResult.message }}</div>
         </div>
       </div>
-
       <div class="card">
         <h2>落地页兑换结果</h2>
-        <p class="muted">打开 loginUrl 后，页面会用 code 自动换取 token。code 只能使用一次。</p>
+        <p class="muted">code 只能使用一次，兑换后会得到登录 token 和目标单据。</p>
         <div v-if="ssoLogin" class="status" :class="{ok: ssoLogin.success}">
           <div v-if="ssoLogin.success">
             <span class="pill">token</span>{{ ssoLogin.data.token }}<br>
             <span class="pill">用户</span>{{ ssoLogin.data.user.id }}<br>
+            <span class="pill">角色</span>{{ ssoLogin.data.user.role }}<br>
             <span class="pill">目标</span>{{ ssoLogin.data.target.type }} / {{ ssoLogin.data.target.id }}
           </div>
           <div v-else class="bad">{{ ssoLogin.code }} - {{ ssoLogin.message }}</div>
@@ -103,10 +135,7 @@
     <section v-if="active === 'barcode'" class="card">
       <h2>条码全生命周期</h2>
       <p class="muted">查询条码打印、入库、领料、成品入库、销售出库事件。</p>
-      <div class="form-row">
-        <input v-model="barcode" placeholder="例如 BC001">
-        <button class="primary" :disabled="loading" @click="loadBarcode">查询</button>
-      </div>
+      <div class="form-row"><input v-model="barcode" placeholder="例如 BC001"><button class="primary" :disabled="loading" @click="loadBarcode">查询</button></div>
       <div v-if="barcodeResult" class="status">
         <span class="pill">条码</span>{{ barcodeResult.barcode }}
         <span class="pill">事件数</span>{{ barcodeResult.totalEvents }}
@@ -114,16 +143,7 @@
       </div>
       <table v-if="barcodeResult && barcodeResult.events.length">
         <thead><tr><th>时间</th><th>业务</th><th>操作</th><th>单据</th><th>仓库</th><th>状态</th></tr></thead>
-        <tbody>
-          <tr v-for="event in barcodeResult.events" :key="event.businessTime + event.billNo">
-            <td>{{ event.businessTime }}</td>
-            <td>{{ event.businessName }}</td>
-            <td>{{ event.operationType }}</td>
-            <td>{{ event.billNo }}</td>
-            <td>{{ event.warehouse }}</td>
-            <td :class="event.recordStatus === 'SUCCESS' ? 'ok' : 'bad'">{{ event.recordStatus }}</td>
-          </tr>
-        </tbody>
+        <tbody><tr v-for="event in barcodeResult.events" :key="event.businessTime + event.billNo"><td>{{ event.businessTime }}</td><td>{{ event.businessName }}</td><td>{{ event.operationType }}</td><td>{{ event.billNo }}</td><td>{{ event.warehouse }}</td><td :class="event.recordStatus === 'SUCCESS' ? 'ok' : 'bad'">{{ event.recordStatus }}</td></tr></tbody>
       </table>
     </section>
 
@@ -153,40 +173,31 @@
         <div class="form-row"><input v-model="sf.receiverName" placeholder="收件人"></div>
         <div class="form-row"><input v-model="sf.receiverPhone" placeholder="手机号"></div>
         <div class="form-row"><input v-model="sf.receiverAddress" placeholder="地址"></div>
-        <div class="form-row">
-          <input v-model="sf.cargoName" placeholder="货品">
-          <input v-model.number="sf.quantity" type="number" min="1" placeholder="数量">
-        </div>
+        <div class="form-row"><input v-model="sf.cargoName" placeholder="货品"><input v-model.number="sf.quantity" type="number" min="1" placeholder="数量"></div>
         <label class="muted"><input v-model="sf.failBusiness" type="checkbox" style="min-width:auto"> 模拟业务失败</label>
-        <div class="form-row">
-          <button class="primary" :disabled="loading" @click="createSfOrder">下单</button>
-          <button class="secondary" @click="loadSfLogs">刷新日志</button>
-        </div>
+        <div class="form-row"><button class="primary" :disabled="loading" @click="createSfOrder">下单</button><button class="secondary" @click="loadSfLogs">刷新日志</button></div>
         <div v-if="sfResult" class="status" :class="{ok: sfResult.success}">
-          <div v-if="sfResult.success">
-            <span class="pill">运单号</span>{{ sfResult.waybillNo }}<br>
-            <span class="pill">幂等</span>{{ sfResult.idempotent }}
-            <button class="secondary" style="margin-left:8px" @click="loadRoute">查轨迹</button>
-          </div>
+          <div v-if="sfResult.success"><span class="pill">运单号</span>{{ sfResult.waybillNo }}<br><span class="pill">幂等</span>{{ sfResult.idempotent }}<button class="secondary" style="margin-left:8px" @click="loadRoute">查轨迹</button></div>
           <div v-else class="bad">{{ sfResult.code }} - {{ sfResult.message }}</div>
         </div>
       </div>
-
       <div class="card">
         <h2>轨迹与推送日志</h2>
         <div v-if="routeResult" class="status">
           <span class="pill">运单</span>{{ routeResult.waybillNo }}
-          <table>
-            <thead><tr><th>时间</th><th>状态</th><th>地点</th></tr></thead>
-            <tbody><tr v-for="item in routeResult.routes" :key="item.time"><td>{{ item.time }}</td><td>{{ item.status }}</td><td>{{ item.address }}</td></tr></tbody>
-          </table>
+          <table><thead><tr><th>时间</th><th>状态</th><th>地点</th></tr></thead><tbody><tr v-for="item in routeResult.routes" :key="item.time"><td>{{ item.time }}</td><td>{{ item.status }}</td><td>{{ item.address }}</td></tr></tbody></table>
         </div>
         <div v-else class="muted">下单后可以查询轨迹。</div>
-        <table v-if="sfLogs.length">
-          <thead><tr><th>单据</th><th>服务</th><th>结果</th><th>成功</th></tr></thead>
-          <tbody><tr v-for="(log, index) in sfLogs" :key="index"><td>{{ log.billId }}</td><td>{{ log.service }}</td><td>{{ log.result }}</td><td>{{ log.success }}</td></tr></tbody>
-        </table>
+        <table v-if="sfLogs.length"><thead><tr><th>单据</th><th>服务</th><th>结果</th><th>成功</th></tr></thead><tbody><tr v-for="(log, index) in sfLogs" :key="index"><td>{{ log.billId }}</td><td>{{ log.service }}</td><td>{{ log.result }}</td><td>{{ log.success }}</td></tr></tbody></table>
       </div>
+    </section>
+
+    <section v-if="active === 'logs'" class="card">
+      <h2>操作日志</h2>
+      <p class="muted">仅管理员可查看登录、SSO 和顺丰操作记录。</p>
+      <button class="primary" @click="loadLogs">刷新日志</button>
+      <table v-if="operationLogs.length"><thead><tr><th>用户</th><th>操作</th><th>详情</th><th>结果</th><th>时间</th></tr></thead><tbody><tr v-for="(log, index) in operationLogs" :key="index"><td>{{ log.userId }}</td><td>{{ log.action }}</td><td>{{ log.detail }}</td><td>{{ log.success }}</td><td>{{ log.time }}</td></tr></tbody></table>
+      <div v-else class="status">暂无日志。</div>
     </section>
   </main>
 
@@ -199,7 +210,11 @@ new Vue({
   data: {
     active: 'sso',
     loading: false,
+    ssoLoading: false,
+    loginError: '',
     error: '',
+    auth: { token: localStorage.getItem('demo_auth_token') || '', user: null, permissions: [] },
+    loginForm: { username: 'admin', password: 'admin123' },
     sso: { userId: 'ys-user-001', targetType: 'receiveInStock', targetId: 'RIS-1001' },
     ssoResult: null,
     ssoLogin: null,
@@ -210,82 +225,153 @@ new Vue({
     sf: { dispatchBillId: 'CK-1001', receiverName: '张三', receiverPhone: '13800000000', receiverAddress: '上海市浦东新区', cargoName: '样品', quantity: 2, failBusiness: false },
     sfResult: null,
     routeResult: null,
-    sfLogs: []
+    sfLogs: [],
+    operationLogs: []
   },
   computed: {
-    billTraceJson() { return this.billTrace ? JSON.stringify(this.billTrace, null, 2) : ''; }
+    loggedIn() { return !!this.auth.token && !!this.auth.user },
+    billTraceJson() { return this.billTrace ? JSON.stringify(this.billTrace, null, 2) : '' },
+    tabs() {
+      const result = []
+      if (this.can('SSO')) result.push({ key: 'sso', label: 'SSO 单点登录' })
+      if (this.can('BARCODE')) result.push({ key: 'barcode', label: '条码追溯' })
+      if (this.can('BILLTRACE')) result.push({ key: 'bill', label: '单据链追溯' })
+      if (this.can('SF')) result.push({ key: 'sf', label: '顺丰物流' })
+      if (this.can('AUDIT')) result.push({ key: 'logs', label: '操作日志' })
+      return result
+    }
   },
-  mounted() {
-    this.parseSsoLanding();
+  async mounted() {
+    window.addEventListener('hashchange', this.parseSsoLanding)
+    const handled = await this.parseSsoLanding()
+    if (!handled && this.auth.token) await this.loadMe()
+  },
+  beforeDestroy() {
+    window.removeEventListener('hashchange', this.parseSsoLanding)
   },
   methods: {
+    async parseSsoLanding() {
+    const match = window.location.hash.match(/#\/sso\/login\?code=([^&]+)/)
+    if (match) {
+      this.ssoLoading = true
+      await this.exchangeSso(decodeURIComponent(match[1]))
+      this.ssoLoading = false
+      return true
+    }
+    return false
+    },
+    can(permission) { return this.auth.permissions.indexOf(permission) >= 0 },
     async request(url, options) {
-      const response = await fetch(url, options || {});
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || ('HTTP ' + response.status));
-      return data;
+      const opts = Object.assign({}, options || {})
+      const headers = Object.assign({}, opts.headers || {})
+      if (this.auth.token) headers.Authorization = 'Bearer ' + this.auth.token
+      opts.headers = headers
+      const response = await fetch(url, opts)
+      const data = await response.json()
+      if (response.status === 401) {
+        this.clearAuth()
+        throw new Error(data.message || '登录状态已失效')
+      }
+      if (!response.ok) throw new Error(data.message || ('HTTP ' + response.status))
+      return data
     },
-    async authorizeSso() {
-      this.loading = true; this.error = '';
+    setAuth(data) {
+      this.auth.token = data.token
+      this.auth.user = data.user
+      this.auth.permissions = data.permissions || (data.user && data.user.permissions) || []
+      localStorage.setItem('demo_auth_token', data.token)
+      if (this.tabs.length && !this.tabs.some(tab => tab.key === this.active)) this.active = this.tabs[0].key
+    },
+    clearAuth() {
+      this.auth.token = ''
+      this.auth.user = null
+      this.auth.permissions = []
+      localStorage.removeItem('demo_auth_token')
+    },
+    async loadMe() {
       try {
-        this.ssoResult = await this.request('/api/demo/sso/authorize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.sso)
-        });
-      } catch (error) { this.error = error.message; }
-      finally { this.loading = false; }
+        const result = await this.request('/api/auth/me')
+        this.auth.user = result.data.user
+        this.auth.permissions = result.data.user.permissions || result.data.permissions || []
+      } catch (error) { this.clearAuth() }
     },
-    openSso() {
-      if (this.ssoResult && this.ssoResult.data) window.location.href = this.ssoResult.data.loginUrl;
+    async loginLocal() {
+      this.loading = true; this.loginError = ''; this.error = ''
+      try {
+        const result = await this.request('/api/auth/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.loginForm)
+        })
+        this.setAuth(result.data)
+      } catch (error) { this.loginError = error.message }
+      finally { this.loading = false }
     },
-    parseSsoLanding() {
-      const match = window.location.hash.match(/#\/sso\/login\?code=([^&]+)/);
-      if (!match) return;
-      this.active = 'sso';
-      this.exchangeSso(decodeURIComponent(match[1]));
+    async ssoDemoLogin() {
+      this.loading = true; this.loginError = ''
+      try {
+        const result = await this.request('/api/demo/sso/authorize', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: 'ys-user-001', targetType: 'receiveInStock', targetId: 'RIS-1001' })
+        })
+        if (result.success && result.data) window.location.href = result.data.loginUrl
+        else this.loginError = result.message || 'SSO 授权失败'
+      } catch (error) { this.loginError = error.message }
+      finally { this.loading = false }
     },
     async exchangeSso(code) {
       try {
-        this.ssoLogin = await this.request('/api/sso/exchange?code=' + encodeURIComponent(code));
-      } catch (error) { this.error = error.message; }
+        const result = await this.request('/api/sso/exchange?code=' + encodeURIComponent(code))
+        if (result.success) {
+          this.setAuth({ token: result.data.token, user: result.data.user })
+          this.ssoLogin = result
+          this.active = 'sso'
+        } else { this.loginError = result.message || 'code 已失效' }
+      } catch (error) { this.loginError = error.message }
     },
-    async loadBarcode() {
-      this.loading = true; this.error = '';
+    async logout() {
+      try { await this.request('/api/auth/logout', { method: 'POST' }) } catch (ignored) {}
+      this.clearAuth()
+    },
+    async authorizeSso() {
+      this.loading = true; this.error = ''
       try {
-        const result = await this.request('/api/v1/barcodeFlowRecord/trace/' + encodeURIComponent(this.barcode));
-        this.barcodeResult = result.data;
-      } catch (error) { this.error = error.message; }
-      finally { this.loading = false; }
+        this.ssoResult = await this.request('/api/demo/sso/authorize', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.sso)
+        })
+      } catch (error) { this.error = error.message }
+      finally { this.loading = false }
+    },
+    openSso() { if (this.ssoResult && this.ssoResult.data) window.location.href = this.ssoResult.data.loginUrl },
+    async loadBarcode() {
+      this.loading = true; this.error = ''
+      try { const result = await this.request('/api/v1/barcodeFlowRecord/trace/' + encodeURIComponent(this.barcode)); this.barcodeResult = result.data }
+      catch (error) { this.error = error.message }
+      finally { this.loading = false }
     },
     async loadBill() {
-      this.loading = true; this.error = '';
-      try {
-        const result = await this.request('/api/v1/billtrace?billType=' + encodeURIComponent(this.bill.billType) + '&id=' + encodeURIComponent(this.bill.id));
-        this.billTrace = result.data;
-      } catch (error) { this.error = error.message; }
-      finally { this.loading = false; }
+      this.loading = true; this.error = ''
+      try { const result = await this.request('/api/v1/billtrace?billType=' + encodeURIComponent(this.bill.billType) + '&id=' + encodeURIComponent(this.bill.id)); this.billTrace = result.data }
+      catch (error) { this.error = error.message }
+      finally { this.loading = false }
     },
     async createSfOrder() {
-      this.loading = true; this.error = ''; this.routeResult = null;
+      this.loading = true; this.error = ''; this.routeResult = null
       try {
-        this.sfResult = await this.request('/api/sf/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.sf)
-        });
-        await this.loadSfLogs();
-      } catch (error) { this.error = error.message; }
-      finally { this.loading = false; }
+        this.sfResult = await this.request('/api/sf/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(this.sf) })
+        await this.loadSfLogs()
+      } catch (error) { this.error = error.message }
+      finally { this.loading = false }
     },
     async loadRoute() {
-      if (!this.sfResult || !this.sfResult.waybillNo) return;
-      try {
-        this.routeResult = await this.request('/api/sf/route/' + encodeURIComponent(this.sfResult.waybillNo));
-      } catch (error) { this.error = error.message; }
+      if (!this.sfResult || !this.sfResult.waybillNo) return
+      try { this.routeResult = await this.request('/api/sf/route/' + encodeURIComponent(this.sfResult.waybillNo)) }
+      catch (error) { this.error = error.message }
     },
     async loadSfLogs() {
-      try { this.sfLogs = await this.request('/api/sf/logs'); } catch (error) { this.error = error.message; }
+      try { this.sfLogs = await this.request('/api/sf/logs') } catch (error) { this.error = error.message }
+    },
+    async loadLogs() {
+      try { const result = await this.request('/api/admin/logs'); this.operationLogs = result.data } catch (error) { this.error = error.message }
     }
   }
 });
