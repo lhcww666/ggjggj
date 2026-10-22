@@ -45,6 +45,7 @@ public class RagController {
     public Map<String, Object> info() {
         Map<String, Object> data = new LinkedHashMap<String, Object>();
         data.put("retrieval", "keyword+ngram+hash-embedding");
+        data.put("vectorStore", ragService.vectorStoreMode());
         data.put("answerMode", llmProperties.isEnabled() ? "llm-with-template-fallback" : "template");
         data.put("llmEnabled", llmProperties.isEnabled());
         return success(data);

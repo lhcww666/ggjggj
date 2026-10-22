@@ -2,6 +2,7 @@ package com.example.integrations.rag;
 
 import com.example.integrations.auth.AuthSession;
 import com.example.integrations.operation.OperationLogService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,12 +28,14 @@ public class RagService {
     private final OperationLogService logService;
     private final EmbeddingModel embeddingModel;
     private final AnswerGenerator answerGenerator;
+    private final PgVectorStore pgVectorStore;
 
     public RagService(OperationLogService logService, EmbeddingModel embeddingModel,
-                      AnswerGenerator answerGenerator) {
+                      AnswerGenerator answerGenerator, ObjectProvider<PgVectorStore> pgVectorStoreProvider) {
         this.logService = logService;
         this.embeddingModel = embeddingModel;
         this.answerGenerator = answerGenerator;
+        this.pgVectorStore = pgVectorStoreProvider.getIfAvailable();
         seed(
                 "采购下单流程",
                 "采购订单先校验供应商编码、物料编码、数量和含税单价。通过后只生成采购草稿，"
@@ -94,7 +97,9 @@ public class RagService {
                 normalizedContent, normalizedVisibility, session == null ? "system" : session.getUserId());
         synchronized (this) {
             documents.add(document);
-            chunks.addAll(split(document));
+            List<RagChunk> newChunks = split(document);
+            chunks.addAll(newChunks);
+            if (pgVectorStore != null) pgVectorStore.addAll(newChunks);
         }
         logService.record(document.getOwner(), "RAG_DOCUMENT_ADD", normalizedTitle, true);
         return document;
@@ -105,6 +110,7 @@ public class RagService {
             boolean removed = documents.removeIf(document -> document.getId().equals(id));
             if (removed) {
                 chunks.removeIf(chunk -> chunk.getDocumentId().equals(id));
+                if (pgVectorStore != null) pgVectorStore.deleteByDocument(id);
             }
             return removed;
         }
@@ -178,6 +184,9 @@ public class RagService {
         }
         List<String> queryTokens = TextTokenizer.tokens(query);
         double[] queryVector = embeddingModel.embed(query);
+        if (pgVectorStore != null) {
+            return pgVectorStore.search(queryVector, session, topK);
+        }
         Map<String, Integer> documentFrequency = new HashMap<String, Integer>();
         for (RagChunk chunk : visible) {
             for (String token : TextTokenizer.tokens(chunk.getContent())) {
@@ -285,6 +294,10 @@ public class RagService {
             result.add(String.valueOf(source.get("title")));
         }
         return result;
+    }
+
+    public String vectorStoreMode() {
+        return pgVectorStore == null ? "memory" : "pgvector";
     }
 
     private static final class ScoredChunk {

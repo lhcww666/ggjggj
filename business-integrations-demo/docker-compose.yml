@@ -17,3 +17,14 @@ services:
     container_name: demo-redis
     ports:
       - "6379:6379"
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: demo-pgvector
+    environment:
+      POSTGRES_DB: demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/pgvector-init.sql:/docker-entrypoint-initdb.d/01-pgvector.sql:ro

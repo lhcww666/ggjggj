@@ -13,6 +13,7 @@ demo:
   sso-state: memory
 
 rag:
+  vector-store: memory
   embedding:
     provider: hash
     base-url: https://api.openai.com/v1
