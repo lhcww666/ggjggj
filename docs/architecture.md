@@ -87,3 +87,8 @@ Web / Agent UI
 
 当前不依赖外部向量库；生产环境可以把本地检索替换为
 Embedding + 向量数据库 + Rerank，并保留相同的权限过滤和引用协议。
+
+回答生成支持两种模式：
+
+- 默认模板模式：无外部 Key，可解释
+- LLM 模式：配置 OpenAI-Compatible `/chat/completions` 后启用；失败时回退模板

@@ -87,11 +87,24 @@ validate
 
 - 文档按固定窗口切分，带重叠
 - 关键词、中文双字 n-gram 和哈希 embedding 混合检索
-- 支持 txt / md / docx 文档
+- 支持 txt / md / docx / pdf 文档
 - 可见范围：PUBLIC / OPERATOR / ADMIN
 - 返回引用片段和分数
 - 内置 5 条评测问题
 - 当前答案由可解释模板生成，可替换为 Dify 或任意 LLM
+
+可选 OpenAI-Compatible LLM：
+
+```yaml
+rag:
+  llm:
+    enabled: true
+    base-url: https://api.openai.com/v1
+    api-key: ${RAG_LLM_API_KEY}
+    model: gpt-4o-mini
+```
+
+未配置 Key 或 LLM 调用失败时自动降级到模板回答。
 
 ## 演示登录
 
