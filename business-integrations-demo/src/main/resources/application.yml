@@ -13,6 +13,12 @@ demo:
   sso-state: memory
 
 rag:
+  embedding:
+    provider: hash
+    base-url: https://api.openai.com/v1
+    api-key:
+    model: text-embedding-3-small
+    timeout-seconds: 30
   llm:
     enabled: false
     base-url: https://api.openai.com/v1
