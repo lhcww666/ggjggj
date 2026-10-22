@@ -1,5 +1,7 @@
 package com.example.integrations.rag;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
@@ -22,7 +24,10 @@ public class DocumentTextExtractor {
         if (name.endsWith(".docx")) {
             return extractDocx(file);
         }
-        throw new IllegalArgumentException("演示版支持 txt、md、docx 文件");
+        if (name.endsWith(".pdf")) {
+            return extractPdf(file);
+        }
+        throw new IllegalArgumentException("演示版支持 txt、md、docx、pdf 文件");
     }
 
     private String extractDocx(MultipartFile file) throws Exception {
@@ -48,5 +53,14 @@ public class DocumentTextExtractor {
             }
         }
         return result.toString().trim();
+    }
+
+    private String extractPdf(MultipartFile file) throws Exception {
+        try (InputStream input = file.getInputStream();
+             PDDocument document = PDDocument.load(input)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            String text = stripper.getText(document);
+            return text == null ? "" : text.trim();
+        }
     }
 }

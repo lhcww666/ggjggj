@@ -109,7 +109,7 @@ public class RagService {
         result.put("query", normalizedQuery);
         result.put("sources", hits);
         result.put("answer", answerGenerator.generate(normalizedQuery, hits));
-        result.put("generatedBy", "hybrid-local-template");
+        result.put("generatedBy", "hybrid-rag");
         logService.record(session == null ? "anonymous" : session.getUserId(),
                 "RAG_ASK", normalizedQuery, true);
         return result;

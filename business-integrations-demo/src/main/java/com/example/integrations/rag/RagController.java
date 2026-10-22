@@ -31,11 +31,23 @@ public class RagController {
     private final RagService ragService;
     private final ObjectMapper mapper;
     private final DocumentTextExtractor textExtractor;
+    private final RagLlmProperties llmProperties;
 
-    public RagController(RagService ragService, ObjectMapper mapper, DocumentTextExtractor textExtractor) {
+    public RagController(RagService ragService, ObjectMapper mapper,
+                         DocumentTextExtractor textExtractor, RagLlmProperties llmProperties) {
         this.ragService = ragService;
         this.mapper = mapper;
         this.textExtractor = textExtractor;
+        this.llmProperties = llmProperties;
+    }
+
+    @GetMapping("/info")
+    public Map<String, Object> info() {
+        Map<String, Object> data = new LinkedHashMap<String, Object>();
+        data.put("retrieval", "keyword+ngram+hash-embedding");
+        data.put("answerMode", llmProperties.isEnabled() ? "llm-with-template-fallback" : "template");
+        data.put("llmEnabled", llmProperties.isEnabled());
+        return success(data);
     }
 
     @PostMapping("/ask")
@@ -77,11 +89,11 @@ public class RagController {
             @RequestPart("file") MultipartFile file,
             @RequestAttribute("authSession") AuthSession session) throws Exception {
         String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
-        if (!(name.endsWith(".txt") || name.endsWith(".md") || name.endsWith(".docx"))) {
-            return ResponseEntity.badRequest().body(error("UNSUPPORTED_FILE", "演示版支持 txt/md/docx 文件"));
+        if (!(name.endsWith(".txt") || name.endsWith(".md") || name.endsWith(".docx") || name.endsWith(".pdf"))) {
+            return ResponseEntity.badRequest().body(error("UNSUPPORTED_FILE", "演示版支持 txt/md/docx/pdf 文件"));
         }
-        if (file.getSize() > 5 * 1024 * 1024) {
-            return ResponseEntity.badRequest().body(error("FILE_TOO_LARGE", "文件不能超过 5MB"));
+        if (file.getSize() > 10 * 1024 * 1024) {
+            return ResponseEntity.badRequest().body(error("FILE_TOO_LARGE", "文件不能超过 10MB"));
         }
         String content = textExtractor.extract(file);
         return ResponseEntity.ok(success(ragService.add(title, content, visibility, session)));
