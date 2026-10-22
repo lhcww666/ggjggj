@@ -88,6 +88,13 @@ Web / Agent UI
 默认使用本地哈希 embedding，不依赖外部向量库；可以切换为 OpenAI-Compatible
 Embedding，后续再接入 pgvector / Milvus + Rerank，保留相同的权限过滤和引用协议。
 
+已提供 pgvector 模式：
+
+```text
+RagChunk -> PostgreSQL rag_chunk.embedding(vector)
+查询 -> HNSW cosine -> 权限过滤 -> 引用片段
+```
+
 回答生成支持两种模式：
 
 - 默认模板模式：无外部 Key，可解释

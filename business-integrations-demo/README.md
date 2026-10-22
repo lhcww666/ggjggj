@@ -168,6 +168,21 @@ rag:
 
 默认 `provider: hash`；外部 Embedding 失败时也会降级到本地哈希向量。
 
+## pgvector 模式
+
+```powershell
+docker compose up -d postgres
+mvn spring-boot:run "-Dspring-boot.run.profiles=pgvector"
+```
+
+pgvector 模式：
+
+- 使用 PostgreSQL `vector` 扩展
+- chunk 写入 `rag_chunk`
+- HNSW 余弦索引
+- 按 PUBLIC / OPERATOR / ADMIN 过滤后检索
+- 通过 `GET /api/rag/info` 查看 `vectorStore=pgvector`
+
 权限：
 
 - 所有角色可以查询

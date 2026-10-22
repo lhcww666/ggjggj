@@ -119,6 +119,16 @@ rag:
 
 默认 `provider: hash`，没有外部 Key 也能运行。
 
+可选 pgvector：
+
+```powershell
+cd business-integrations-demo
+docker compose up -d postgres
+mvn spring-boot:run "-Dspring-boot.run.profiles=pgvector"
+```
+
+pgvector 模式使用 PostgreSQL + `vector(1536)` 存储 chunk；默认 memory 模式不受影响。
+
 ## 演示登录
 
 | 账号 | 密码 | 角色 |

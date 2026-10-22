@@ -66,6 +66,15 @@ SSO exchange 返回 token、用户和权限列表，前端保存 token，后端�
 
 当前也提供了 OpenAI-Compatible Embedding 适配器，配置 `rag.embedding.provider=openai` 后启用；外部调用失败会降级到哈希向量。
 
+pgvector 模式的查询链路是：
+
+```text
+Embedding -> PostgreSQL vector 列
+  -> HNSW 余弦索引
+  -> 权限过滤
+  -> TopK 引用
+```
+
 **怎么防止越权检索？**
 
 检索前按用户角色过滤知识文档：PUBLIC 所有人可见，OPERATOR 仅业务员和管理员，ADMIN 仅管理员。引用来源也只返回过滤后的片段。

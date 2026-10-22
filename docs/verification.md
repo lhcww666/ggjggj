@@ -48,3 +48,5 @@ API 验证：
 > 真实 Embedding 模式已完成代码接入，但当前默认使用本地哈希向量；未在本地配置外部 Embedding Key。
 
 > MySQL/Redis 模式已提供 Docker Compose 和 SQL 初始化脚本；当前验证环境 Docker daemon 未启动，因此该模式只完成编译和配置校验。
+
+> pgvector 模式已提供 PostgreSQL + pgvector Compose、建表和 HNSW 检索代码；当前 Docker daemon 未启动，未做真实 pgvector 查询验证。默认 memory 模式已通过 20/20 浏览器验证和 10/10 RAG 评测。
