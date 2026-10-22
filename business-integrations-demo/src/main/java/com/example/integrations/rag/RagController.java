@@ -30,10 +30,12 @@ public class RagController {
 
     private final RagService ragService;
     private final ObjectMapper mapper;
+    private final DocumentTextExtractor textExtractor;
 
-    public RagController(RagService ragService, ObjectMapper mapper) {
+    public RagController(RagService ragService, ObjectMapper mapper, DocumentTextExtractor textExtractor) {
         this.ragService = ragService;
         this.mapper = mapper;
+        this.textExtractor = textExtractor;
     }
 
     @PostMapping("/ask")
@@ -75,13 +77,13 @@ public class RagController {
             @RequestPart("file") MultipartFile file,
             @RequestAttribute("authSession") AuthSession session) throws Exception {
         String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
-        if (!(name.endsWith(".txt") || name.endsWith(".md"))) {
-            return ResponseEntity.badRequest().body(error("UNSUPPORTED_FILE", "演示版支持 txt/md 文件"));
+        if (!(name.endsWith(".txt") || name.endsWith(".md") || name.endsWith(".docx"))) {
+            return ResponseEntity.badRequest().body(error("UNSUPPORTED_FILE", "演示版支持 txt/md/docx 文件"));
         }
-        if (file.getSize() > 1024 * 1024) {
-            return ResponseEntity.badRequest().body(error("FILE_TOO_LARGE", "文件不能超过 1MB"));
+        if (file.getSize() > 5 * 1024 * 1024) {
+            return ResponseEntity.badRequest().body(error("FILE_TOO_LARGE", "文件不能超过 5MB"));
         }
-        String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+        String content = textExtractor.extract(file);
         return ResponseEntity.ok(success(ragService.add(title, content, visibility, session)));
     }
 

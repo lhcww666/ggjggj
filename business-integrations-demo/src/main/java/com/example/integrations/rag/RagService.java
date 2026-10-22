@@ -25,9 +25,14 @@ public class RagService {
     private final List<RagDocument> documents = new CopyOnWriteArrayList<RagDocument>();
     private final List<RagChunk> chunks = new CopyOnWriteArrayList<RagChunk>();
     private final OperationLogService logService;
+    private final EmbeddingModel embeddingModel;
+    private final AnswerGenerator answerGenerator;
 
-    public RagService(OperationLogService logService) {
+    public RagService(OperationLogService logService, EmbeddingModel embeddingModel,
+                      AnswerGenerator answerGenerator) {
         this.logService = logService;
+        this.embeddingModel = embeddingModel;
+        this.answerGenerator = answerGenerator;
         seed(
                 "采购下单流程",
                 "采购订单先校验供应商编码、物料编码、数量和含税单价。通过后只生成采购草稿，"
@@ -103,8 +108,8 @@ public class RagService {
         Map<String, Object> result = new LinkedHashMap<String, Object>();
         result.put("query", normalizedQuery);
         result.put("sources", hits);
-        result.put("answer", buildAnswer(hits));
-        result.put("generatedBy", "local-template");
+        result.put("answer", answerGenerator.generate(normalizedQuery, hits));
+        result.put("generatedBy", "hybrid-local-template");
         logService.record(session == null ? "anonymous" : session.getUserId(),
                 "RAG_ASK", normalizedQuery, true);
         return result;
@@ -155,30 +160,33 @@ public class RagService {
         if (visible.isEmpty()) {
             return Collections.emptyList();
         }
-        List<String> queryTokens = tokens(query);
+        List<String> queryTokens = TextTokenizer.tokens(query);
+        double[] queryVector = embeddingModel.embed(query);
         Map<String, Integer> documentFrequency = new HashMap<String, Integer>();
         for (RagChunk chunk : visible) {
-            for (String token : tokens(chunk.getContent())) {
+            for (String token : TextTokenizer.tokens(chunk.getContent())) {
                 documentFrequency.merge(token, 1, Integer::sum);
             }
         }
         List<ScoredChunk> scored = new ArrayList<ScoredChunk>();
         for (RagChunk chunk : visible) {
-            List<String> chunkTokens = tokens(chunk.getContent());
+            List<String> chunkTokens = TextTokenizer.tokens(chunk.getContent());
             Map<String, Integer> frequencies = new HashMap<String, Integer>();
             for (String token : chunkTokens) {
                 frequencies.merge(token, 1, Integer::sum);
             }
-            double score = 0;
+            double keywordScore = 0;
             for (String token : queryTokens) {
                 Integer tf = frequencies.get(token);
                 if (tf == null) continue;
                 int df = documentFrequency.getOrDefault(token, 0);
                 double idf = Math.log((visible.size() + 1.0) / (df + 1.0)) + 1.0;
-                score += tf * idf;
+                keywordScore += tf * idf;
             }
+            double vectorScore = cosine(queryVector, chunk.getEmbedding());
+            double score = keywordScore + vectorScore * 2.0;
             if (score > 0) {
-                scored.add(new ScoredChunk(chunk, score));
+                scored.add(new ScoredChunk(chunk, keywordScore, vectorScore, score));
             }
         }
         scored.sort(Comparator.comparingDouble(ScoredChunk::getScore).reversed());
@@ -193,26 +201,13 @@ public class RagService {
             source.put("documentId", item.chunk.getDocumentId());
             source.put("title", item.chunk.getTitle());
             source.put("score", Math.round(item.score * 1000.0) / 1000.0);
+            source.put("keywordScore", Math.round(item.keywordScore * 1000.0) / 1000.0);
+            source.put("vectorScore", Math.round(item.vectorScore * 1000.0) / 1000.0);
             source.put("snippet", item.chunk.getContent());
             source.put("visibility", item.chunk.getVisibility());
             result.add(source);
         }
         return result;
-    }
-
-    private String buildAnswer(List<Map<String, Object>> sources) {
-        if (sources.isEmpty()) {
-            return "知识库中没有找到相关内容。请换一个更具体的说法，或让管理员补充文档。";
-        }
-        StringBuilder answer = new StringBuilder("根据当前知识库检索到以下依据：\n");
-        int count = Math.min(2, sources.size());
-        for (int i = 0; i < count; i++) {
-            Map<String, Object> source = sources.get(i);
-            answer.append(i + 1).append(". ").append(source.get("title"))
-                    .append("：").append(source.get("snippet")).append("\n");
-        }
-        answer.append("以上回答仅基于检索到的片段，未命中的内容不应作为结论。");
-        return answer.toString();
     }
 
     private void seed(String title, String content, String visibility, String owner) {
@@ -229,7 +224,8 @@ public class RagService {
             int end = Math.min(content.length(), start + CHUNK_SIZE);
             String part = content.substring(start, end).trim();
             if (!part.isEmpty()) {
-                result.add(new RagChunk(document.getId(), document.getTitle(), part, document.getVisibility()));
+                result.add(new RagChunk(document.getId(), document.getTitle(), part,
+                        document.getVisibility(), embeddingModel.embed(part)));
             }
             if (end == content.length()) break;
             start = Math.max(start + 1, end - CHUNK_OVERLAP);
@@ -237,45 +233,19 @@ public class RagService {
         return result;
     }
 
-    private List<String> tokens(String text) {
-        List<String> result = new ArrayList<String>();
-        String normalized = text == null ? "" : text.toLowerCase();
-        StringBuilder word = new StringBuilder();
-        StringBuilder chinese = new StringBuilder();
-        for (int i = 0; i < normalized.length(); i++) {
-            char c = normalized.charAt(i);
-            if (Character.toString(c).matches("[a-z0-9]")) {
-                word.append(c);
-                flushChinese(chinese, result);
-            } else if (c >= '\u4e00' && c <= '\u9fa5') {
-                chinese.append(c);
-                flushWord(word, result);
-            } else {
-                flushWord(word, result);
-                flushChinese(chinese, result);
-            }
+    private double cosine(double[] left, double[] right) {
+        if (left == null || right == null) return 0;
+        double dot = 0;
+        double leftNorm = 0;
+        double rightNorm = 0;
+        int length = Math.min(left.length, right.length);
+        for (int i = 0; i < length; i++) {
+            dot += left[i] * right[i];
+            leftNorm += left[i] * left[i];
+            rightNorm += right[i] * right[i];
         }
-        flushWord(word, result);
-        flushChinese(chinese, result);
-        return result;
-    }
-
-    private void flushWord(StringBuilder word, List<String> result) {
-        if (word.length() > 0) {
-            result.add(word.toString());
-            word.setLength(0);
-        }
-    }
-
-    private void flushChinese(StringBuilder chinese, List<String> result) {
-        if (chinese.length() == 1) {
-            result.add(chinese.toString());
-        } else if (chinese.length() > 1) {
-            for (int i = 0; i < chinese.length() - 1; i++) {
-                result.add(chinese.substring(i, i + 2));
-            }
-        }
-        chinese.setLength(0);
+        if (leftNorm == 0 || rightNorm == 0) return 0;
+        return dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm));
     }
 
     private boolean visible(String visibility, AuthSession session) {
@@ -303,10 +273,14 @@ public class RagService {
 
     private static final class ScoredChunk {
         private final RagChunk chunk;
+        private final double keywordScore;
+        private final double vectorScore;
         private final double score;
 
-        private ScoredChunk(RagChunk chunk, double score) {
+        private ScoredChunk(RagChunk chunk, double keywordScore, double vectorScore, double score) {
             this.chunk = chunk;
+            this.keywordScore = keywordScore;
+            this.vectorScore = vectorScore;
             this.score = score;
         }
 
