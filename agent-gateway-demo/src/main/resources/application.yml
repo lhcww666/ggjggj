@@ -1,0 +1,7 @@
+server:
+  port: 8080
+
+agent:
+  # 本地学习用，生产环境必须从环境变量或密钥管理系统注入
+  tool-key: local-demo-tool-key
+  context-ttl-seconds: 1800
