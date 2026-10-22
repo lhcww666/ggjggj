@@ -85,8 +85,8 @@ Web / Agent UI
   -> 引用片段 + 模板答案
 ```
 
-当前不依赖外部向量库；生产环境可以把本地检索替换为
-Embedding + 向量数据库 + Rerank，并保留相同的权限过滤和引用协议。
+默认使用本地哈希 embedding，不依赖外部向量库；可以切换为 OpenAI-Compatible
+Embedding，后续再接入 pgvector / Milvus + Rerank，保留相同的权限过滤和引用协议。
 
 回答生成支持两种模式：
 

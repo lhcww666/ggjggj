@@ -64,6 +64,8 @@ SSO exchange 返回 token、用户和权限列表，前端保存 token，后端�
 
 这个 Demo 用关键词和本地哈希 embedding 做混合检索，先跑通文档切分、权限过滤、TopK、引用和评测。生产环境可以把哈希 embedding 替换成真实 Embedding + 向量库，不改变上层问答协议。
 
+当前也提供了 OpenAI-Compatible Embedding 适配器，配置 `rag.embedding.provider=openai` 后启用；外部调用失败会降级到哈希向量。
+
 **怎么防止越权检索？**
 
 检索前按用户角色过滤知识文档：PUBLIC 所有人可见，OPERATOR 仅业务员和管理员，ADMIN 仅管理员。引用来源也只返回过滤后的片段。

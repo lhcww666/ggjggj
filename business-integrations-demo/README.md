@@ -155,6 +155,19 @@ rag:
 
 LLM 调用失败时自动回退到模板回答。`GET /api/rag/info` 会返回当前检索和回答模式。
 
+可选真实 Embedding：
+
+```yaml
+rag:
+  embedding:
+    provider: openai
+    base-url: https://api.openai.com/v1
+    api-key: ${RAG_EMBEDDING_API_KEY}
+    model: text-embedding-3-small
+```
+
+默认 `provider: hash`；外部 Embedding 失败时也会降级到本地哈希向量。
+
 权限：
 
 - 所有角色可以查询

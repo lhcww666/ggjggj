@@ -106,6 +106,19 @@ rag:
 
 未配置 Key 或 LLM 调用失败时自动降级到模板回答。
 
+可选真实 Embedding：
+
+```yaml
+rag:
+  embedding:
+    provider: openai
+    base-url: https://api.openai.com/v1
+    api-key: ${RAG_EMBEDDING_API_KEY}
+    model: text-embedding-3-small
+```
+
+默认 `provider: hash`，没有外部 Key 也能运行。
+
 ## 演示登录
 
 | 账号 | 密码 | 角色 |

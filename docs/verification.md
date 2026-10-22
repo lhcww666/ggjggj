@@ -38,10 +38,13 @@ API 验证：
 - RAG 管理员文档管理
 - RAG 权限过滤（查看者看不到 OPERATOR/ADMIN 文档）
 - RAG 评测 1.0 命中率
+- RAG 评测集扩展到 10 条，命中 10/10
 - PDF 上传并提取 1202 字符后删除
 - `/api/rag/info` 返回混合检索和 template 模式
 - 20/20 断言通过
 
 > LLM 模式尚未接入真实 Key；已验证未配置 Key 时会降级到模板回答。
+
+> 真实 Embedding 模式已完成代码接入，但当前默认使用本地哈希向量；未在本地配置外部 Embedding Key。
 
 > MySQL/Redis 模式已提供 Docker Compose 和 SQL 初始化脚本；当前验证环境 Docker daemon 未启动，因此该模式只完成编译和配置校验。
