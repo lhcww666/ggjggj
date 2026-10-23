@@ -42,7 +42,8 @@ public class AuthInterceptor implements HandlerInterceptor {
     }
 
     private boolean isPublic(String path) {
-        return path.startsWith("/api/auth/login")
+        return path.startsWith("/api/health")
+                || path.startsWith("/api/auth/login")
                 || path.startsWith("/api/sso/")
                 || path.startsWith("/api/demo/sso/")
                 || path.startsWith("/api/v1/barcodeFlowRecord/trace/");

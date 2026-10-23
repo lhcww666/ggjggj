@@ -75,6 +75,14 @@ function proxy(request, response, prefix, target) {
 const server = http.createServer((request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname
 
+  if (pathname === '/health') {
+    return sendJson(response, 200, {
+      status: 'UP',
+      service: 'enterprise-agent-ui',
+      pid: process.pid,
+      timestamp: Date.now()
+    })
+  }
   if (pathname === '/') return serveFile(response, currentDir, '/index.html')
   if (pathname === '/agent') {
     response.writeHead(302, { Location: '/agent/' })

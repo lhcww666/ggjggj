@@ -32,23 +32,23 @@ docs/                        架构、验证记录、面试说明
 
 ## 快速开始
 
-先启动前端：
+一键启动 UI、Agent API、Business API 和 MySQL Agent 模式：
 
 ```powershell
-npm run dev --prefix ui
+powershell -ExecutionPolicy Bypass -File .\scripts\start-dev.ps1
 ```
 
-打开：
+查看状态和停止：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\status-dev.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\stop-dev.ps1
+```
+
+打开统一入口：
 
 ```text
 http://localhost:9000/
-```
-
-再分别启动后端 API：
-
-```powershell
-mvn -f api/agent-gateway/pom.xml spring-boot:run
-mvn -f api/business-integrations/pom.xml spring-boot:run
 ```
 
 访问：
@@ -56,6 +56,20 @@ mvn -f api/business-integrations/pom.xml spring-boot:run
 ```text
 http://localhost:9000/agent/
 http://localhost:9000/business/
+```
+
+健康检查：
+
+- UI：`http://localhost:9000/health`
+- Agent API：`http://localhost:18080/api/health`
+- Business API：`http://localhost:18081/api/health`
+
+也可以分别手动启动三个服务：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\api\agent-gateway\scripts\run-mysql.ps1
+mvn -f api/business-integrations/pom.xml spring-boot:run
+npm run dev --prefix ui
 ```
 
 ### MySQL + Redis 模式

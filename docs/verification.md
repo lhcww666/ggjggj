@@ -71,6 +71,16 @@ MySQL 持久化验证：
 - 统一首页、Agent 控制台、企业集成控制台均真实打开
 - 浏览器断言 7/7 通过，无 JavaScript 异常
 
+一键启动与健康检查：
+
+- `scripts/start-dev.ps1` 同时启动 UI、Agent API、Business API
+- `scripts/status-dev.ps1` 显示三个服务均为 `UP`
+- UI 健康检查返回 `enterprise-agent-ui`
+- Agent API 健康检查返回 `agent-gateway` 和 MySQL 存储模式
+- Business API 健康检查返回 `business-integrations`
+- `scripts/stop-dev.ps1` 只关闭本次记录的 PID
+- 停止后 9000、18080、18081 全部释放
+
 ## Business Integrations
 
 API 验证：

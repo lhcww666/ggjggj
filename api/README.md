@@ -28,6 +28,11 @@ config/          配置和安全
 mvn -f api/pom.xml test
 ```
 
+健康检查：
+
+- `GET http://localhost:18080/api/health`
+- `GET http://localhost:18081/api/health`
+
 分别启动：
 
 ```powershell

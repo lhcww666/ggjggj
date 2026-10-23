@@ -8,6 +8,8 @@ npm run dev --prefix ui
 
 访问 `http://localhost:9000/`。
 
+健康检查：`GET http://localhost:9000/health`
+
 代理规则：
 
 | 前端路径 | 后端 |
