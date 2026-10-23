@@ -13,6 +13,8 @@
 
 ![RAG 知识库](docs/rag-demo.png)
 
+![多智能体控制台](docs/agent-team-console.png)
+
 ## 目录
 
 ```text
@@ -125,6 +127,9 @@ Agent Gateway 支持可选 OpenAI-Compatible Tool Calling。未配置模型时�
 
 多 Agent 模式采用可审计的 `supervisor -> specialist` 路由。主管将库存和采购任务交给不同专家，
 每个专家只有自己的工具白名单；这不是不受控的 Agent 群聊，也不能绕过人工确认。
+
+Agent Gateway 启动后打开 `http://localhost:8080/` 可以使用多智能体控制台，
+查看 handoff、工具调用，并运行固定的 8 条路由评测。
 
 可选 pgvector：
 

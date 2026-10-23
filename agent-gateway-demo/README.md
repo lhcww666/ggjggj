@@ -24,6 +24,9 @@ mvn spring-boot:run
 
 默认端口：`8080`
 
+打开 `http://localhost:8080/` 使用 Agent Team Console，可查看专家列表、主管 handoff、
+工具调用和路由评测结果。
+
 如果端口被占用：
 
 ```powershell
@@ -103,6 +106,14 @@ Content-Type: application/json
 
 主管优先识别采购意图，再识别库存意图。请求也可以通过 `agentCode` 明确选择专家；
 如果专家尝试调用其他 Agent 的工具，系统返回 `scope-blocked`，不会执行工具。
+
+路由评测：
+
+```http
+GET /api/agent/team/evaluate
+```
+
+固定用例覆盖库存路由、采购路由、主管兜底和双向工具越权拦截。
 
 ## 库存查询
 

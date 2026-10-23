@@ -25,13 +25,23 @@
 
 多 Agent 路由验证：
 
-- `mvn test`：10 个测试全部通过
+- `mvn test`：11 个测试全部通过
 - `/api/agent/team/agents` 返回库存专家和采购专家 2 个 Agent
 - “A002 还有多少库存”路由到 `inventory-specialist`，返回库存 `3`
 - “采购 A002 2 件”路由到 `purchase-specialist` 并生成草稿
 - 采购草稿确认仍由 `purchase-specialist` 执行，规划器为 `explicit-confirmation`
 - 采购专家尝试查询库存时返回 `scope-blocked`，没有执行工具
 - 无法识别的请求留在 `supervisor`，不产生错误 handoff
+- 固定路由评测 8/8 通过
+
+浏览器验证：
+
+- Agent Team Console 正常加载 2 个专家和工具白名单
+- 页面发起库存任务后显示 `inventory-specialist`、handoff 和库存 `3`
+- 页面发起采购任务后显示 `purchase-specialist` 和草稿 ID
+- 选择采购专家查询库存时显示 `scope-blocked`，工具调用为空
+- 页面运行评测后显示 8/8、100% 和 9 行表格（含表头）
+- 浏览器断言 12/12 通过，无 JavaScript 异常，接口请求均为 HTTP 200
 
 ## Business Integrations
 

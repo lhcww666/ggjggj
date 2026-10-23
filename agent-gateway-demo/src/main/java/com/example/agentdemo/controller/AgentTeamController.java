@@ -2,6 +2,7 @@ package com.example.agentdemo.controller;
 
 import com.example.agentdemo.model.ChatRequest;
 import com.example.agentdemo.team.AgentTeamResponse;
+import com.example.agentdemo.team.AgentTeamEvaluationService;
 import com.example.agentdemo.team.AgentTeamService;
 import com.example.agentdemo.team.SpecialistAgent;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,15 +12,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/agent/team")
 public class AgentTeamController {
 
     private final AgentTeamService teamService;
+    private final AgentTeamEvaluationService evaluationService;
 
-    public AgentTeamController(AgentTeamService teamService) {
+    public AgentTeamController(AgentTeamService teamService,
+                               AgentTeamEvaluationService evaluationService) {
         this.teamService = teamService;
+        this.evaluationService = evaluationService;
     }
 
     @PostMapping("/chat")
@@ -30,5 +35,10 @@ public class AgentTeamController {
     @GetMapping("/agents")
     public Collection<SpecialistAgent> agents() {
         return teamService.agents();
+    }
+
+    @GetMapping("/evaluate")
+    public Map<String, Object> evaluate() {
+        return evaluationService.evaluate();
     }
 }
