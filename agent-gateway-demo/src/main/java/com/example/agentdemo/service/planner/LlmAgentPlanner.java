@@ -22,6 +22,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Set;
+
 /**
  * 可选的 OpenAI-Compatible Tool Calling 规划器。
  *
@@ -58,12 +60,17 @@ public class LlmAgentPlanner implements AgentPlanner {
 
     @Override
     public AgentPlan plan(ChatRequest request, AgentContext context) {
+        return plan(request, context, null);
+    }
+
+    @Override
+    public AgentPlan plan(ChatRequest request, AgentContext context, Set<String> allowedTools) {
         if (isBlank(properties.getBaseUrl()) || isBlank(properties.getModel())) {
-            return fallback(request, context, "LLM base-url 或 model 未配置");
+            return fallback(request, context, allowedTools, "LLM base-url 或 model 未配置");
         }
 
         try {
-            ObjectNode body = buildRequest(request);
+            ObjectNode body = buildRequest(request, allowedTools);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             if (!isBlank(properties.getApiKey())) {
@@ -75,14 +82,14 @@ public class LlmAgentPlanner implements AgentPlanner {
                     endpoint, HttpMethod.POST, new HttpEntity<String>(mapper.writeValueAsString(body), headers),
                     String.class
             );
-            return parseResponse(response.getBody(), request, context);
+            return parseResponse(response.getBody(), request, context, allowedTools);
         } catch (Exception exception) {
             log.warn("LLM planner 调用失败，切换到规则规划器: {}", exception.getMessage());
-            return fallback(request, context, exception.getMessage());
+            return fallback(request, context, allowedTools, exception.getMessage());
         }
     }
 
-    private ObjectNode buildRequest(ChatRequest request) {
+    private ObjectNode buildRequest(ChatRequest request, Set<String> allowedTools) {
         ObjectNode body = mapper.createObjectNode();
         body.put("model", properties.getModel());
         body.put("temperature", properties.getTemperature());
@@ -105,7 +112,8 @@ public class LlmAgentPlanner implements AgentPlanner {
 
         ArrayNode tools = body.putArray("tools");
         for (Tool tool : registry.all().values()) {
-            if (CONFIRM_TOOL.equals(tool.name())) {
+            if (CONFIRM_TOOL.equals(tool.name())
+                    || (allowedTools != null && !allowedTools.contains(tool.name()))) {
                 continue;
             }
             ObjectNode item = tools.addObject();
@@ -119,9 +127,10 @@ public class LlmAgentPlanner implements AgentPlanner {
         return body;
     }
 
-    private AgentPlan parseResponse(String responseBody, ChatRequest request, AgentContext context) throws Exception {
+    private AgentPlan parseResponse(String responseBody, ChatRequest request, AgentContext context,
+                                    Set<String> allowedTools) throws Exception {
         if (isBlank(responseBody)) {
-            return fallback(request, context, "LLM 返回空响应");
+            return fallback(request, context, allowedTools, "LLM 返回空响应");
         }
 
         JsonNode message = mapper.readTree(responseBody)
@@ -130,26 +139,27 @@ public class LlmAgentPlanner implements AgentPlanner {
         if (!toolCalls.isArray() || toolCalls.size() == 0) {
             String content = message.path("content").asText("");
             if (isBlank(content)) {
-                return fallback(request, context, "LLM 未返回工具调用或回答");
+                return fallback(request, context, allowedTools, "LLM 未返回工具调用或回答");
             }
             return AgentPlan.answer("llm", content.trim(), false);
         }
 
         JsonNode function = toolCalls.path(0).path("function");
         String toolName = function.path("name").asText("");
-        if (CONFIRM_TOOL.equals(toolName) || registry.find(toolName) == null) {
-            return fallback(request, context, "LLM 选择了未允许的工具: " + toolName);
+        if (CONFIRM_TOOL.equals(toolName) || registry.find(toolName) == null
+                || (allowedTools != null && !allowedTools.contains(toolName))) {
+            return fallback(request, context, allowedTools, "LLM 选择了未允许的工具: " + toolName);
         }
 
         JsonNode argumentsNode = mapper.readTree(function.path("arguments").asText("{}"));
         if (!argumentsNode.isObject()) {
-            return fallback(request, context, "LLM 工具参数不是 JSON 对象");
+            return fallback(request, context, allowedTools, "LLM 工具参数不是 JSON 对象");
         }
         return AgentPlan.tool("llm", toolName, (ObjectNode) argumentsNode);
     }
 
-    private AgentPlan fallback(ChatRequest request, AgentContext context, String reason) {
-        AgentPlan rulePlan = fallbackPlanner.plan(request, context);
+    private AgentPlan fallback(ChatRequest request, AgentContext context, Set<String> allowedTools, String reason) {
+        AgentPlan rulePlan = fallbackPlanner.plan(request, context, allowedTools);
         log.warn("LLM 降级原因: {}", reason);
         return new AgentPlan(
                 "rule-fallback",

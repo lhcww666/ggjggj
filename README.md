@@ -2,7 +2,7 @@
 
 一个面向企业业务场景的 Java 全栈演示项目，包含：
 
-- **Agent Gateway Demo**：短期用户上下文、工具注册、规则/LLM Tool Calling、库存查询、采购草稿、确认执行、幂等和 SSE
+- **Agent Gateway Demo**：短期用户上下文、工具注册、规则/LLM Tool Calling、主管 Agent 路由、专家工具白名单、库存查询、采购草稿、确认执行、幂等和 SSE
 - **Business Integrations Demo**：SSO 单点登录、条码追溯、单据链追溯、顺丰物流模拟
 - **RAG Knowledge Base**：文档切分、关键词 + 哈希 embedding 混合检索、引用来源、权限过滤和评测
 - **Vue 2 控制台**：在一个页面演示 SSO、条码、单据链和顺丰流程
@@ -122,6 +122,9 @@ rag:
 Agent Gateway 支持可选 OpenAI-Compatible Tool Calling。未配置模型时使用确定性的规则规划器；
 模型调用失败会自动降级。模型只负责选择工具和参数，Java 仍负责上下文、权限、校验、草稿、
 人工确认和幂等。
+
+多 Agent 模式采用可审计的 `supervisor -> specialist` 路由。主管将库存和采购任务交给不同专家，
+每个专家只有自己的工具白名单；这不是不受控的 Agent 群聊，也不能绕过人工确认。
 
 可选 pgvector：
 

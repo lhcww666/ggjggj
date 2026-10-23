@@ -23,6 +23,16 @@
 - 两次使用同一 `confirmDraftId` 确认，返回相同 `orderId`
 - 显式确认走 `explicit-confirmation`，不经过模型规划器
 
+多 Agent 路由验证：
+
+- `mvn test`：10 个测试全部通过
+- `/api/agent/team/agents` 返回库存专家和采购专家 2 个 Agent
+- “A002 还有多少库存”路由到 `inventory-specialist`，返回库存 `3`
+- “采购 A002 2 件”路由到 `purchase-specialist` 并生成草稿
+- 采购草稿确认仍由 `purchase-specialist` 执行，规划器为 `explicit-confirmation`
+- 采购专家尝试查询库存时返回 `scope-blocked`，没有执行工具
+- 无法识别的请求留在 `supervisor`，不产生错误 handoff
+
 ## Business Integrations
 
 API 验证：

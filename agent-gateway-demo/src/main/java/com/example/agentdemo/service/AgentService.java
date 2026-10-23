@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -33,6 +34,10 @@ public class AgentService {
     }
 
     public ChatResponse chat(ChatRequest request) {
+        return chat(request, null);
+    }
+
+    public ChatResponse chat(ChatRequest request, Set<String> allowedTools) {
         if (isBlank(request.getQuery())) {
             throw new IllegalArgumentException("query 不能为空");
         }
@@ -45,13 +50,18 @@ public class AgentService {
                 : request.getConversationId());
 
         if (!isBlank(request.getConfirmDraftId())) {
+            if (allowedTools != null && !allowedTools.contains("confirm_purchase_draft")) {
+                response.setPlanner("scope-blocked");
+                response.setAnswer("当前 Agent 无权确认采购草稿，请切换采购专家 Agent。");
+                return response;
+            }
             ObjectNode input = mapper.createObjectNode().put("draftId", request.getConfirmDraftId());
             response.setPlanner("explicit-confirmation");
             applyTool("confirm_purchase_draft", context, input, response);
             return response;
         }
 
-        AgentPlan plan = planner.plan(request, context);
+        AgentPlan plan = planner.plan(request, context, allowedTools);
         response.setPlanner(plan.getPlanner());
         response.setFallback(plan.isFallback());
         if (!isBlank(plan.getToolName())) {

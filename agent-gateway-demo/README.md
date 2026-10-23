@@ -11,6 +11,8 @@
 - 幂等创建
 - 规则规划器与可选 LLM Tool Calling
 - LLM 故障自动降级
+- 主管 Agent、库存专家和采购专家
+- 专家级工具白名单
 - SSE 流式接口
 
 ## 启动
@@ -64,6 +66,43 @@ agent:
 
 `fallback=true` 表示发生过降级。模型不会收到登录 Token，也不能调用
 `confirm_purchase_draft`；正式写操作只能由请求中的 `confirmDraftId` 触发。
+
+## 多 Agent 路由
+
+查看专家 Agent：
+
+```http
+GET /api/agent/team/agents
+```
+
+主管 Agent 接口：
+
+```http
+POST /api/agent/team/chat
+Content-Type: application/json
+```
+
+```json
+{
+  "userId": "demo-user",
+  "query": "采购 A001 5 个"
+}
+```
+
+返回包含：
+
+- `selectedAgent`：实际接手的专家
+- `supervisorReason`：主管路由原因
+- `handoffs`：主管到专家的交接记录
+- `result`：专家执行后的原始 `ChatResponse`
+
+当前专家：
+
+- `inventory-specialist`：只允许 `query_stock`
+- `purchase-specialist`：允许 `prepare_purchase_draft` 和显式确认工具
+
+主管优先识别采购意图，再识别库存意图。请求也可以通过 `agentCode` 明确选择专家；
+如果专家尝试调用其他 Agent 的工具，系统返回 `scope-blocked`，不会执行工具。
 
 ## 库存查询
 

@@ -23,6 +23,20 @@ Planner 只接收用户文本、物料编码和数量等最小业务信息，不
 模型返回的工具名必须存在于 Java ToolRegistry；`confirm_purchase_draft` 不会暴露给模型，
 只能通过独立的 `confirmDraftId` 请求字段触发。LLM 超时或返回非法工具时降级到规则规划器。
 
+### Multi-Agent Team
+
+```text
+用户
+  -> Supervisor Agent
+  -> Inventory Specialist（query_stock）
+  -> Purchase Specialist（prepare_purchase_draft / explicit confirmation）
+  -> Java ToolRegistry
+```
+
+主管负责可解释的意图路由，并记录 `supervisor -> specialist` handoff。
+每个专家拥有独立的工具白名单，Planner 只能看到白名单内工具。专家越权调用时返回
+`scope-blocked`，业务写操作仍必须经过 `confirmDraftId` 人工确认。
+
 ## Business Integrations
 
 ### SSO
