@@ -4,7 +4,7 @@
 
 | 模块 | 端口 | 职责 |
 |---|---:|---|
-| `agent-gateway` | 8080 | Agent 上下文、工具调用、多智能体路由、评测、MySQL 持久化 |
+| `agent-gateway` | 18080 | Agent 上下文、工具调用、多智能体路由、评测、MySQL 持久化 |
 | `business-integrations` | 18081 | 登录权限、SSO、条码、单据追溯、顺丰、RAG |
 
 ## 分层方式

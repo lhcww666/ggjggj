@@ -22,10 +22,10 @@ cd api/agent-gateway
 mvn spring-boot:run
 ```
 
-默认端口：`8080`
+默认端口：`18080`
 
 前端位于项目根目录的 `ui/agent-console`，由 `ui/server.mjs` 通过 `/agent-api/**`
-代理到 8080。访问 `http://localhost:9000/agent/` 使用控制台。
+代理到 18080。访问 `http://localhost:9000/agent/` 使用控制台。
 
 如果端口被占用：
 

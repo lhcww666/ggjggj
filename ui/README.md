@@ -12,7 +12,7 @@ npm run dev --prefix ui
 
 | 前端路径 | 后端 |
 |---|---|
-| `/agent-api/**` | `http://127.0.0.1:8080/**` |
+| `/agent-api/**` | `http://127.0.0.1:18080/**` |
 | `/business-api/**` | `http://127.0.0.1:18081/**` |
 
 如后端端口不同，可设置 `AGENT_API_URL` 和 `BUSINESS_API_URL`，例如：

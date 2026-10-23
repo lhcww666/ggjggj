@@ -21,7 +21,7 @@
 
 ```text
 api/
-  agent-gateway/             AI Agent 工具网关（8080）
+  agent-gateway/             AI Agent 工具网关（18080）
   business-integrations/     SSO、追溯、顺丰、RAG（18081）
 ui/
   server.mjs                 静态页面服务与 API 代理（9000）

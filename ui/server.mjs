@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const port = Number(process.env.UI_PORT || 9000)
-const agentApi = new URL(process.env.AGENT_API_URL || 'http://127.0.0.1:8080')
+const agentApi = new URL(process.env.AGENT_API_URL || 'http://127.0.0.1:18080')
 const businessApi = new URL(process.env.BUSINESS_API_URL || 'http://127.0.0.1:18081')
 const apiTargets = {
   '/agent-api/': { hostname: agentApi.hostname, port: Number(agentApi.port || 80) },
