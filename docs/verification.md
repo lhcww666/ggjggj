@@ -62,6 +62,15 @@ MySQL 持久化验证：
 - 路由评测显示 8/8、100% 和 8 条用例
 - 浏览器断言 12/12 通过，无 JavaScript 异常
 
+前后端分离与项目结构验证：
+
+- `mvn -f api/pom.xml test`：两个后端模块全部编译通过
+- `ui/server.mjs` 独立运行在 9000，不依赖 Spring Boot 托管静态页面
+- `/agent-api/**` 代理到 Agent API，库存查询返回 `12`
+- `/business-api/**` 代理到 Business API，未登录鉴权返回预期的 401
+- 统一首页、Agent 控制台、企业集成控制台均真实打开
+- 浏览器断言 7/7 通过，无 JavaScript 异常
+
 ## Business Integrations
 
 API 验证：

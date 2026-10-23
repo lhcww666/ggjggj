@@ -9,50 +9,59 @@
 
 项目使用 Java 8、Spring Boot 2.7、Vue 2 和 MySQL/Redis 可选配置。
 
-![演示页面](docs/auth-demo.png)
+![统一项目入口](docs/ui-home.png)
 
 ![RAG 知识库](docs/rag-demo.png)
 
 ![多智能体控制台](docs/agent-team-console.png)
 
+![企业集成控制台](docs/business-console.png)
+
 ## 目录
 
 ```text
-agent-gateway-demo/          AI Agent 工具网关
-business-integrations-demo/  SSO、追溯、顺丰物流
+api/
+  agent-gateway/             AI Agent 工具网关（8080）
+  business-integrations/     SSO、追溯、顺丰、RAG（18081）
+ui/
+  server.mjs                 静态页面服务与 API 代理（9000）
+  agent-console/             多智能体控制台
+  business-console/          企业集成控制台
 docs/                        架构、验证记录、面试说明
 ```
 
 ## 快速开始
 
-### Agent Gateway
+先启动前端：
 
 ```powershell
-cd agent-gateway-demo
-mvn spring-boot:run
+npm run dev --prefix ui
 ```
-
-默认端口：`8080`
-
-### Business Integrations
-
-```powershell
-cd business-integrations-demo
-mvn spring-boot:run
-```
-
-默认端口：`18081`
 
 打开：
 
 ```text
-http://localhost:18081/
+http://localhost:9000/
+```
+
+再分别启动后端 API：
+
+```powershell
+mvn -f api/agent-gateway/pom.xml spring-boot:run
+mvn -f api/business-integrations/pom.xml spring-boot:run
+```
+
+访问：
+
+```text
+http://localhost:9000/agent/
+http://localhost:9000/business/
 ```
 
 ### MySQL + Redis 模式
 
 ```powershell
-cd business-integrations-demo
+cd api/business-integrations
 docker compose up -d
 mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
 ```
@@ -64,7 +73,7 @@ mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
 本地已提供独立的 `agent_gateway` 数据库。Agent 库存、上下文、采购草稿和订单会持久化到 MySQL：
 
 ```powershell
-cd agent-gateway-demo
+cd api/agent-gateway
 powershell -ExecutionPolicy Bypass -File .\scripts\run-mysql.ps1
 ```
 
@@ -140,13 +149,13 @@ Agent Gateway 支持可选 OpenAI-Compatible Tool Calling。未配置模型时�
 多 Agent 模式采用可审计的 `supervisor -> specialist` 路由。主管将库存和采购任务交给不同专家，
 每个专家只有自己的工具白名单；这不是不受控的 Agent 群聊，也不能绕过人工确认。
 
-Agent Gateway 启动后打开 `http://localhost:8080/` 可以使用多智能体控制台，
+前端启动后打开 `http://localhost:9000/agent/` 可以使用多智能体控制台，
 查看 handoff、工具调用，并运行固定的 8 条路由评测。
 
 可选 pgvector：
 
 ```powershell
-cd business-integrations-demo
+cd api/business-integrations
 docker compose up -d postgres
 mvn spring-boot:run "-Dspring-boot.run.profiles=pgvector"
 ```

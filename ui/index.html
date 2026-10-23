@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Enterprise AI Portfolio</title>
+  <style>
+    :root { color-scheme: dark; --bg:#080d17; --panel:#101a2d; --line:rgba(145,174,220,.16); --text:#eff5ff; --muted:#8091ad; --cyan:#6de5f5; --green:#62dfaa; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(54,104,247,.2), transparent 30rem),
+        linear-gradient(rgba(120,150,210,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120,150,210,.04) 1px, transparent 1px),
+        var(--bg);
+      background-size: auto, 42px 42px, 42px 42px, auto;
+    }
+    main { width:min(1040px, calc(100% - 32px)); margin:0 auto; padding:72px 0; }
+    .eyebrow { color:var(--cyan); font:700 11px Consolas,monospace; letter-spacing:.18em; }
+    h1 { margin:14px 0 14px; font-size:clamp(42px,7vw,76px); line-height:.98; letter-spacing:-.065em; }
+    p { max-width:650px; color:var(--muted); line-height:1.75; }
+    .cards { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:44px; }
+    a.card {
+      display:block; min-height:250px; padding:26px; color:inherit; text-decoration:none;
+      border:1px solid var(--line); border-radius:22px; background:linear-gradient(145deg, rgba(17,28,49,.96), rgba(8,14,26,.9));
+      box-shadow:0 24px 70px rgba(0,0,0,.32); transition:transform .2s,border-color .2s;
+    }
+    a.card:hover { transform:translateY(-4px); border-color:rgba(109,229,245,.38); }
+    .tag { display:inline-block; padding:6px 9px; border-radius:999px; background:rgba(98,223,170,.1); color:var(--green); font:700 10px Consolas,monospace; }
+    h2 { margin:54px 0 10px; font-size:24px; letter-spacing:-.03em; }
+    .card p { font-size:13px; }
+    .arrow { display:block; margin-top:42px; color:var(--cyan); font:12px Consolas,monospace; }
+    footer { margin-top:32px; color:#5e6f89; font:10px Consolas,monospace; letter-spacing:.08em; }
+    @media (max-width:700px) { .cards { grid-template-columns:1fr; } main { padding-top:48px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">JAVA BACKEND · AI APPLICATION · BUSINESS INTEGRATION</div>
+    <h1>Two systems.<br>One clean architecture.</h1>
+    <p>前端与后端完全分离。这里分别进入多智能体控制台和企业集成业务台。</p>
+    <section class="cards">
+      <a class="card" href="/agent/">
+        <span class="tag">AGENT SYSTEM</span>
+        <h2>Agent Team Console</h2>
+        <p>主管路由、专家工具白名单、handoff、工具轨迹、MySQL 持久化和路由评测。</p>
+        <span class="arrow">OPEN CONSOLE →</span>
+      </a>
+      <a class="card" href="/business/">
+        <span class="tag">BUSINESS SYSTEM</span>
+        <h2>Enterprise Integrations</h2>
+        <p>SSO、条码追溯、单据链、顺丰物流模拟、RAG 知识库和权限控制。</p>
+        <span class="arrow">OPEN CONSOLE →</span>
+      </a>
+    </section>
+    <footer>UI :9000 · AGENT API :8080 · BUSINESS API :18081</footer>
+  </main>
+</body>
+</html>

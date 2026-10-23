@@ -1,5 +1,27 @@
 # Architecture
 
+## Project Layout
+
+```text
+ui/          Static frontend and API proxy
+api/         Spring Boot backend modules
+docs/        Architecture and verification records
+```
+
+The frontend runs independently on port 9000. It routes `/agent-api/**` to the Agent
+service and `/business-api/**` to the business integration service, so the browser never
+depends on a backend serving HTML.
+
+Each backend follows the same responsibility boundaries:
+
+```text
+controller/  HTTP presentation
+service/     use cases and orchestration
+repository/  persistence adapters
+domain/      models and contracts
+config/      configuration and security
+```
+
 ## Agent Gateway
 
 ```text
