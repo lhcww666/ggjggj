@@ -9,6 +9,8 @@ public class ChatResponse {
     private String contextId;
     private String conversationId;
     private String draftId;
+    private String planner;
+    private boolean fallback;
     private List<ToolCall> toolCalls = new ArrayList<>();
 
     public String getAnswer() {
@@ -41,6 +43,22 @@ public class ChatResponse {
 
     public void setDraftId(String draftId) {
         this.draftId = draftId;
+    }
+
+    public String getPlanner() {
+        return planner;
+    }
+
+    public void setPlanner(String planner) {
+        this.planner = planner;
+    }
+
+    public boolean isFallback() {
+        return fallback;
+    }
+
+    public void setFallback(boolean fallback) {
+        this.fallback = fallback;
     }
 
     public List<ToolCall> getToolCalls() {

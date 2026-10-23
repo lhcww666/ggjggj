@@ -2,7 +2,7 @@
 
 一个面向企业业务场景的 Java 全栈演示项目，包含：
 
-- **Agent Gateway Demo**：短期用户上下文、工具注册、库存查询、采购草稿、确认执行、幂等和 SSE
+- **Agent Gateway Demo**：短期用户上下文、工具注册、规则/LLM Tool Calling、库存查询、采购草稿、确认执行、幂等和 SSE
 - **Business Integrations Demo**：SSO 单点登录、条码追溯、单据链追溯、顺丰物流模拟
 - **RAG Knowledge Base**：文档切分、关键词 + 哈希 embedding 混合检索、引用来源、权限过滤和评测
 - **Vue 2 控制台**：在一个页面演示 SSO、条码、单据链和顺丰流程
@@ -90,7 +90,7 @@ validate
 - 支持 txt / md / docx / pdf 文档
 - 可见范围：PUBLIC / OPERATOR / ADMIN
 - 返回引用片段和分数
-- 内置 5 条评测问题
+- 内置 10 条评测问题
 - 当前答案由可解释模板生成，可替换为 Dify 或任意 LLM
 
 可选 OpenAI-Compatible LLM：
@@ -118,6 +118,10 @@ rag:
 ```
 
 默认 `provider: hash`，没有外部 Key 也能运行。
+
+Agent Gateway 支持可选 OpenAI-Compatible Tool Calling。未配置模型时使用确定性的规则规划器；
+模型调用失败会自动降级。模型只负责选择工具和参数，Java 仍负责上下文、权限、校验、草稿、
+人工确认和幂等。
 
 可选 pgvector：
 

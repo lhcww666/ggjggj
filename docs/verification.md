@@ -9,6 +9,19 @@
 - 确认创建
 - 重复确认幂等
 - 直接工具调用
+- 规则规划器支持从自然语言提取物料编码和采购数量
+- 可选 OpenAI-Compatible Tool Calling 响应解析
+- LLM 服务错误时自动降级到规则规划器
+- 自动化测试覆盖模型工具选择和故障降级
+
+本次 Agent Gateway 验证结果：
+
+- `mvn test`：4 个测试全部通过
+- 启动端口 `18080` 后，工具列表返回 3 个工具
+- 自然语言“查询 A001 的库存”返回库存 `12`，使用 `rule` 规划器
+- 自然语言“采购 A001 5 个”成功生成草稿，使用 `rule` 规划器
+- 两次使用同一 `confirmDraftId` 确认，返回相同 `orderId`
+- 显式确认走 `explicit-confirmation`，不经过模型规划器
 
 ## Business Integrations
 

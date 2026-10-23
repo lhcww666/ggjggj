@@ -5,3 +5,11 @@ agent:
   # 本地学习用，生产环境必须从环境变量或密钥管理系统注入
   tool-key: local-demo-tool-key
   context-ttl-seconds: 1800
+  llm:
+    # 默认关闭，不配置 Key 也能运行全部演示和测试
+    enabled: false
+    base-url: https://api.openai.com/v1
+    api-key: ${AGENT_LLM_API_KEY:}
+    model: gpt-4o-mini
+    temperature: 0.0
+    timeout-millis: 12000

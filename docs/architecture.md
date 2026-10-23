@@ -14,10 +14,14 @@ Web / Agent UI
 
 - 前端：流式展示、文件、人工确认
 - Gateway：会话、SSE、用户上下文、工具鉴权
-- Agent Platform：理解意图、选择工具
+- Agent Planner：规则规划或 OpenAI-Compatible Tool Calling
 - Java Tools：权限、校验、草稿、幂等、审计
 - MySQL：会话、草稿、幂等记录
 - Redis：短期上下文和校验票据
+
+Planner 只接收用户文本、物料编码和数量等最小业务信息，不接触登录 Token。
+模型返回的工具名必须存在于 Java ToolRegistry；`confirm_purchase_draft` 不会暴露给模型，
+只能通过独立的 `confirmDraftId` 请求字段触发。LLM 超时或返回非法工具时降级到规则规划器。
 
 ## Business Integrations
 
