@@ -4,13 +4,12 @@
 
 ```text
 ui/          Static frontend and API proxy
-api/         Spring Boot backend modules
+api/         One Spring Boot backend with two business packages
 docs/        Architecture and verification records
 ```
 
-The frontend runs independently on port 9000. It routes `/agent-api/**` to the Agent
-service and `/business-api/**` to the business integration service, so the browser never
-depends on a backend serving HTML.
+The frontend runs independently on port 9000 and routes `/api/**` to the single Spring Boot
+API on port 18080. The browser never depends on a backend serving HTML.
 
 Each backend follows the same responsibility boundaries:
 
@@ -21,6 +20,9 @@ repository/  persistence adapters
 domain/      models and contracts
 config/      configuration and security
 ```
+
+`agentdemo` and `integrations` are packages inside the same deployable API, not separate
+backend services.
 
 ## Agent Gateway
 

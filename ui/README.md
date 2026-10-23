@@ -14,13 +14,12 @@ npm run dev --prefix ui
 
 | 前端路径 | 后端 |
 |---|---|
-| `/agent-api/**` | `http://127.0.0.1:18080/**` |
-| `/business-api/**` | `http://127.0.0.1:18081/**` |
+| `/api/**` | `http://127.0.0.1:18080/**` |
 
-如后端端口不同，可设置 `AGENT_API_URL` 和 `BUSINESS_API_URL`，例如：
+如后端端口不同，可设置 `API_URL`，例如：
 
 ```powershell
-$env:AGENT_API_URL="http://127.0.0.1:19080"
+$env:API_URL="http://127.0.0.1:19080"
 npm run dev --prefix ui
 ```
 

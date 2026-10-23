@@ -1,0 +1,7 @@
+rag:
+  vector-store: pgvector
+  pgvector:
+    url: jdbc:postgresql://localhost:5432/demo
+    username: demo
+    password: demo
+    dimension: 1536

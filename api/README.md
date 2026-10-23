@@ -1,11 +1,10 @@
 # API
 
-本目录只包含后端服务，不存放前端页面。
+本目录是一个 Spring Boot 后端工程，不存放前端页面。
 
-| 模块 | 端口 | 职责 |
-|---|---:|---|
-| `agent-gateway` | 18080 | Agent 上下文、工具调用、多智能体路由、评测、MySQL 持久化 |
-| `business-integrations` | 18081 | 登录权限、SSO、条码、单据追溯、顺丰、RAG |
+| 端口 | 职责 |
+|---:|---|
+| 18080 | Agent、多智能体、SSO、条码、单据链、顺丰、RAG |
 
 ## 分层方式
 
@@ -19,8 +18,31 @@ domain/          领域对象：请求、响应、实体
 config/          配置和安全
 ```
 
-`agent-gateway` 中 `repository` 和 `context` 包承担数据访问职责，
-`service`、`team`、`service/planner` 承担应用服务职责，`controller` 是 REST 入口。
+`com.example.agentdemo` 和 `com.example.integrations` 是同一 API 中的两个业务包：
+
+```text
+com.example
+├── EnterpriseApplication
+├── config/DataSourceConfig
+├── controller/HealthController
+├── agentdemo/
+│   ├── controller/
+│   ├── service/
+│   ├── repository/
+│   ├── context/
+│   ├── tool/
+│   └── model/
+└── integrations/
+    ├── auth/
+    ├── sso/
+    ├── barcode/
+    ├── billtrace/
+    ├── sf/
+    ├── rag/
+    ├── operation/
+    ├── repository/
+    └── config/
+```
 
 ## 构建
 
@@ -31,11 +53,9 @@ mvn -f api/pom.xml test
 健康检查：
 
 - `GET http://localhost:18080/api/health`
-- `GET http://localhost:18081/api/health`
 
-分别启动：
+启动：
 
 ```powershell
-mvn -f api/agent-gateway/pom.xml spring-boot:run
-mvn -f api/business-integrations/pom.xml spring-boot:run
+powershell -ExecutionPolicy Bypass -File .\scripts\run-mysql.ps1
 ```

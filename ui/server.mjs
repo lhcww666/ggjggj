@@ -5,11 +5,9 @@ import { fileURLToPath } from 'node:url'
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const port = Number(process.env.UI_PORT || 9000)
-const agentApi = new URL(process.env.AGENT_API_URL || 'http://127.0.0.1:18080')
-const businessApi = new URL(process.env.BUSINESS_API_URL || 'http://127.0.0.1:18081')
+const api = new URL(process.env.API_URL || 'http://127.0.0.1:18080')
 const apiTargets = {
-  '/agent-api/': { hostname: agentApi.hostname, port: Number(agentApi.port || 80) },
-  '/business-api/': { hostname: businessApi.hostname, port: Number(businessApi.port || 80) }
+  '/api/': { hostname: api.hostname, port: Number(api.port || 80), stripPrefix: false }
 }
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -54,7 +52,7 @@ function serveStatic(response, folder, suffix) {
 }
 
 function proxy(request, response, prefix, target) {
-  const targetPath = request.url.slice(prefix.length - 1) || '/'
+  const targetPath = target.stripPrefix === false ? request.url : (request.url.slice(prefix.length - 1) || '/')
   const headers = { ...request.headers, host: target.hostname + ':' + target.port }
   const upstream = http.request({
     hostname: target.hostname,

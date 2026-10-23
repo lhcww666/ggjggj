@@ -1,0 +1,52 @@
+server:
+  port: 18080
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/agent_gateway?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${AGENT_DB_USERNAME:agent_gateway}
+    password: ${AGENT_DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+
+agent:
+  tool-key: local-demo-tool-key
+  context-ttl-seconds: 1800
+  storage: mysql
+  context-store: mysql
+  llm:
+    enabled: ${AGENT_LLM_ENABLED:false}
+    base-url: ${AGENT_LLM_BASE_URL:https://api.openai.com/v1}
+    api-key: ${AGENT_LLM_API_KEY:}
+    model: ${AGENT_LLM_MODEL:gpt-4o-mini}
+    temperature: 0.0
+    timeout-millis: 12000
+
+integration:
+  sso-base-url: http://localhost:9000/business
+  sso-app-secret: demo-sso-secret
+  sso-code-ttl-seconds: 60
+  sf-check-word: demo-sf-check-word
+  sf-customer-code: DEMO_CUSTOMER
+
+demo:
+  storage: jdbc
+  sso-state: memory
+
+rag:
+  vector-store: memory
+  embedding:
+    provider: hash
+    base-url: ${RAG_EMBEDDING_BASE_URL:https://api.openai.com/v1}
+    api-key: ${RAG_EMBEDDING_API_KEY:}
+    model: text-embedding-3-small
+    timeout-seconds: 30
+  llm:
+    enabled: ${RAG_LLM_ENABLED:false}
+    base-url: ${RAG_LLM_BASE_URL:https://api.openai.com/v1}
+    api-key: ${RAG_LLM_API_KEY:}
+    model: gpt-4o-mini
+    timeout-seconds: 30

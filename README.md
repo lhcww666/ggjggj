@@ -7,7 +7,7 @@
 - **RAG Knowledge Base**：文档切分、关键词 + 哈希 embedding 混合检索、引用来源、权限过滤和评测
 - **Vue 2 控制台**：在一个页面演示 SSO、条码、单据链和顺丰流程
 
-项目使用 Java 8、Spring Boot 2.7、Vue 2 和 MySQL/Redis 可选配置。
+项目使用 Java 8、Spring Boot 2.7、Vue 2，MySQL 为默认持久化方案，Redis 按需启用。
 
 ![统一项目入口](docs/ui-home.png)
 
@@ -21,8 +21,12 @@
 
 ```text
 api/
-  agent-gateway/             AI Agent 工具网关（18080）
-  business-integrations/     SSO、追溯、顺丰、RAG（18081）
+  src/main/java/
+    com/example/agentdemo/    Agent 业务包
+    com/example/integrations/SSO、追溯、顺丰和 RAG 业务包
+  src/main/resources/         配置与 MySQL 初始化脚本
+  scripts/run-mysql.ps1       单一 API 启动脚本
+  pom.xml                     一个 Spring Boot API
 ui/
   server.mjs                 静态页面服务与 API 代理（9000）
   agent-console/             多智能体控制台
@@ -32,7 +36,7 @@ docs/                        架构、验证记录、面试说明
 
 ## 快速开始
 
-一键启动 UI、Agent API、Business API 和 MySQL Agent 模式：
+一键启动 UI 和单一 Spring Boot API：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\start-dev.ps1
@@ -61,38 +65,26 @@ http://localhost:9000/business/
 健康检查：
 
 - UI：`http://localhost:9000/health`
-- Agent API：`http://localhost:18080/api/health`
-- Business API：`http://localhost:18081/api/health`
+- API：`http://localhost:18080/api/health`
 
-也可以分别手动启动三个服务：
+也可以手动启动两个进程：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\api\agent-gateway\scripts\run-mysql.ps1
-mvn -f api/business-integrations/pom.xml spring-boot:run
+powershell -ExecutionPolicy Bypass -File .\api\scripts\run-mysql.ps1
 npm run dev --prefix ui
 ```
 
-### MySQL + Redis 模式
+### MySQL 数据
+
+单一 API 默认连接 `agent_gateway` MySQL 数据库。库存、Agent 上下文、采购草稿和订单，
+以及 SSO 映射、条码、单据链、顺丰日志和操作日志都使用同一个数据源。
 
 ```powershell
-cd api/business-integrations
-docker compose up -d
-mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
+powershell -ExecutionPolicy Bypass -File .\api\scripts\run-mysql.ps1
 ```
 
-需要 Docker Desktop 正在运行。
-
-### Agent Gateway MySQL 模式
-
-本地已提供独立的 `agent_gateway` 数据库。Agent 库存、上下文、采购草稿和订单会持久化到 MySQL：
-
-```powershell
-cd api/agent-gateway
-powershell -ExecutionPolicy Bypass -File .\scripts\run-mysql.ps1
-```
-
-本机凭据保存在 Git 忽略的 `.local/mysql.password`，脚本只将密码注入当前进程。
-其他环境可通过 `AGENT_DB_USERNAME`、`AGENT_DB_PASSWORD` 提供凭据，表结构会自动初始化。
+本机凭据保存在 Git 忽略的 `api/.local/mysql.password`。其他环境可通过
+`AGENT_DB_USERNAME`、`AGENT_DB_PASSWORD` 提供凭据，表结构会自动初始化。
 
 ## 设计重点
 
@@ -169,7 +161,7 @@ Agent Gateway 支持可选 OpenAI-Compatible Tool Calling。未配置模型时�
 可选 pgvector：
 
 ```powershell
-cd api/business-integrations
+cd api
 docker compose up -d postgres
 mvn spring-boot:run "-Dspring-boot.run.profiles=pgvector"
 ```

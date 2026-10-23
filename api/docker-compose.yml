@@ -1,0 +1,31 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: demo-mysql
+    environment:
+      MYSQL_DATABASE: agent_gateway
+      MYSQL_USER: agent_gateway
+      MYSQL_PASSWORD: ${AGENT_DB_PASSWORD:?set AGENT_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./src/main/resources/db/agent-schema.sql:/docker-entrypoint-initdb.d/01-agent.sql:ro
+      - ./src/main/resources/db/business-schema.sql:/docker-entrypoint-initdb.d/02-business.sql:ro
+      - ./src/main/resources/db/business-data.sql:/docker-entrypoint-initdb.d/03-business-data.sql:ro
+  redis:
+    image: redis:7
+    container_name: demo-redis
+    ports:
+      - "6379:6379"
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: demo-pgvector
+    environment:
+      POSTGRES_DB: demo
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./src/main/resources/db/pgvector-init.sql:/docker-entrypoint-initdb.d/01-pgvector.sql:ro
