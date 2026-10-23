@@ -15,6 +15,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: agent_gateway
+          MYSQL_USER: agent_gateway
+          MYSQL_PASSWORD: agent_gateway_test
+          MYSQL_ROOT_PASSWORD: root_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uagent_gateway -pagent_gateway_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      AGENT_DB_USERNAME: agent_gateway
+      AGENT_DB_PASSWORD: agent_gateway_test
+      RUN_MYSQL_IT: 'true'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

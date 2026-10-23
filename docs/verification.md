@@ -94,10 +94,18 @@ Business 自动化测试：
 
 GitHub Actions：
 
-- Java 8 Maven 编译与 38 个测试
+- Java 8 Maven 编译与 42 个测试（含 4 个真实 MySQL 集成测试）
 - Spring Boot 打包
 - Node 22 UI 服务语法检查
 - 测试失败时上传 Surefire 报告
+
+真实 MySQL 集成测试：
+
+- CI 启动 MySQL 8.4 服务并创建独立 `agent_gateway` 数据库
+- 验证 Agent 草稿落库和重复确认返回同一订单
+- 验证 Agent 上下文可写入并恢复
+- 验证业务条码引用数据只初始化 7 条
+- 验证 Agent 与业务操作日志共享同一数据源
 
 ## Business Integrations
 
