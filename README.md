@@ -188,7 +188,7 @@ pgvector 模式使用 PostgreSQL + `vector(1536)` 存储 chunk；默认 memory �
 
 ## 验证
 
-- 单一 API：本地默认 42 个测试通过；启用真实 MySQL 集成环境后 46 个测试全部通过
+- 单一 API：本地默认 42 个测试通过；启用真实 MySQL 集成环境后 47 个测试全部通过
 - Agent：工具调用、降级、权限边界、确认幂等
 - Business：登录权限、SSO 防重放、条码、单据链、顺丰和 RAG
 - Vue 页面：真实浏览器交互验证通过

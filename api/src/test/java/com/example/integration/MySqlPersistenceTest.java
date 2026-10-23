@@ -3,6 +3,7 @@ package com.example.integration;
 import com.example.agentdemo.context.AgentContext;
 import com.example.agentdemo.context.AgentContextService;
 import com.example.agentdemo.repository.AgentStore;
+import com.example.agentdemo.team.AgentTeamEvaluationService;
 import com.example.integrations.barcode.BarcodeTraceService;
 import com.example.integrations.operation.OperationLogService;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.util.Map;
 
@@ -32,6 +34,9 @@ class MySqlPersistenceTest {
 
     @Autowired
     private OperationLogService operationLogService;
+
+    @Autowired
+    private AgentTeamEvaluationService agentTeamEvaluationService;
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -86,5 +91,30 @@ class MySqlPersistenceTest {
                 "SELECT COUNT(*) FROM operation_log WHERE user_id = ? AND action = ?",
                 Integer.class, "mysql-user", "MYSQL_TEST"
         )).isEqualTo(1);
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void routingEvaluationDoesNotPersistAgentSideEffects() {
+        int contextsBefore = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM agent_context WHERE user_id = ?",
+                Integer.class, "agent-team-evaluator"
+        );
+        int draftsBefore = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM agent_purchase_draft",
+                Integer.class
+        );
+
+        Map<String, Object> evaluation = agentTeamEvaluationService.evaluate();
+
+        assertThat(evaluation.get("hits")).isEqualTo(11);
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM agent_context WHERE user_id = ?",
+                Integer.class, "agent-team-evaluator"
+        )).isEqualTo(contextsBefore);
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM agent_purchase_draft",
+                Integer.class
+        )).isEqualTo(draftsBefore);
     }
 }

@@ -3,6 +3,10 @@ package com.example.agentdemo.team;
 import com.example.agentdemo.model.ChatRequest;
 import com.example.agentdemo.model.ToolCall;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -18,55 +22,63 @@ public class AgentTeamEvaluationService {
         this.teamService = teamService;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Map<String, Object> evaluate() {
-        List<EvaluationCase> cases = buildCases();
-        List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
-        int hits = 0;
+        try {
+            List<EvaluationCase> cases = buildCases();
+            List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
+            int hits = 0;
 
-        for (EvaluationCase test : cases) {
-            Map<String, Object> item = new LinkedHashMap<String, Object>();
-            item.put("name", test.name);
-            item.put("query", test.query);
-            item.put("expectedAgent", test.expectedAgent);
-            item.put("expectedPlanner", test.expectedPlanner);
-            item.put("expectedTool", test.expectedTool);
+            for (EvaluationCase test : cases) {
+                Map<String, Object> item = new LinkedHashMap<String, Object>();
+                item.put("name", test.name);
+                item.put("query", test.query);
+                item.put("expectedAgent", test.expectedAgent);
+                item.put("expectedPlanner", test.expectedPlanner);
+                item.put("expectedTool", test.expectedTool);
 
-            try {
-                ChatRequest request = new ChatRequest();
-                request.setUserId("agent-team-evaluator");
-                request.setQuery(test.query);
-                request.setAgentCode(test.agentCode);
-                AgentTeamResponse response = teamService.chat(request);
-                String actualTool = firstToolName(response.getResult().getToolCalls());
-                boolean passed = equals(test.expectedAgent, response.getSelectedAgent())
-                        && equals(test.expectedPlanner, response.getResult().getPlanner())
-                        && equals(test.expectedTool, actualTool);
+                try {
+                    ChatRequest request = new ChatRequest();
+                    request.setUserId("agent-team-evaluator");
+                    request.setQuery(test.query);
+                    request.setAgentCode(test.agentCode);
+                    AgentTeamResponse response = teamService.chat(request);
+                    String actualTool = firstToolName(response.getResult().getToolCalls());
+                    boolean passed = equals(test.expectedAgent, response.getSelectedAgent())
+                            && equals(test.expectedPlanner, response.getResult().getPlanner())
+                            && equals(test.expectedTool, actualTool);
 
-                item.put("actualAgent", response.getSelectedAgent());
-                item.put("actualPlanner", response.getResult().getPlanner());
-                item.put("actualTool", actualTool);
-                item.put("answer", response.getResult().getAnswer());
-                item.put("passed", passed);
-                if (passed) {
-                    hits++;
+                    item.put("actualAgent", response.getSelectedAgent());
+                    item.put("actualPlanner", response.getResult().getPlanner());
+                    item.put("actualTool", actualTool);
+                    item.put("answer", response.getResult().getAnswer());
+                    item.put("passed", passed);
+                    if (passed) {
+                        hits++;
+                    }
+                } catch (Exception exception) {
+                    item.put("actualAgent", null);
+                    item.put("actualPlanner", null);
+                    item.put("actualTool", null);
+                    item.put("error", exception.getMessage());
+                    item.put("passed", false);
                 }
-            } catch (Exception exception) {
-                item.put("actualAgent", null);
-                item.put("actualPlanner", null);
-                item.put("actualTool", null);
-                item.put("error", exception.getMessage());
-                item.put("passed", false);
+                results.add(item);
             }
-            results.add(item);
-        }
 
-        Map<String, Object> summary = new LinkedHashMap<String, Object>();
-        summary.put("suite", "agent-team-routing");
-        summary.put("total", cases.size());
-        summary.put("hits", hits);
-        summary.put("passRate", cases.isEmpty() ? 0.0 : (double) hits / cases.size());
-        summary.put("cases", results);
-        return summary;
+            Map<String, Object> summary = new LinkedHashMap<String, Object>();
+            summary.put("suite", "agent-team-routing");
+            summary.put("total", cases.size());
+            summary.put("hits", hits);
+            summary.put("passRate", cases.isEmpty() ? 0.0 : (double) hits / cases.size());
+            summary.put("cases", results);
+            return summary;
+        } finally {
+            // 评测会触发采购草稿与上下文写入，必须在返回结果后回滚，避免污染业务表。
+            if (TransactionSynchronizationManager.isActualTransactionActive()) {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            }
+        }
     }
 
     private List<EvaluationCase> buildCases() {

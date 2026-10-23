@@ -94,7 +94,7 @@ Business 自动化测试：
 
 GitHub Actions：
 
-- Java 8 Maven 编译与 46 个测试（含 4 个真实 MySQL 集成测试）
+- Java 8 Maven 编译与 47 个测试（含 5 个真实 MySQL 集成测试）
 - Spring Boot 打包
 - Node 22 UI 服务语法检查
 - 测试失败时上传 Surefire 报告
@@ -114,6 +114,7 @@ GitHub Actions：
 - 缺少运单号时要求用户补充参数，不执行工具
 - 库存专家尝试查询物流时返回 `scope-blocked`，工具轨迹为 0
 - 固定路由评测从 8 条扩展到 11 条，全部通过
+- 固定路由评测使用独立事务并强制回滚，验证前后 Agent 上下文和采购草稿数量不变
 
 ## Business Integrations
 
