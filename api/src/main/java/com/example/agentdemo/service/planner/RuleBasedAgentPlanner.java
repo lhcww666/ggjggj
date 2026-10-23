@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 public class RuleBasedAgentPlanner implements AgentPlanner {
 
     private static final Pattern INVENTORY_CODE = Pattern.compile("\\b([A-Za-z]\\d{3,})\\b");
+    private static final Pattern WAYBILL_NO = Pattern.compile("\\b(SF\\d{6,})\\b", Pattern.CASE_INSENSITIVE);
     private static final Pattern QUANTITY_WITH_UNIT = Pattern.compile("(\\d+)\\s*(?:个|件|台|套)");
     private static final Pattern PURCHASE_QUANTITY = Pattern.compile("(?:采购|购买|买|补货)\\s*[A-Za-z]\\d{3,}\\s*(\\d+)");
 
@@ -31,8 +32,11 @@ public class RuleBasedAgentPlanner implements AgentPlanner {
     public AgentPlan plan(ChatRequest request, AgentContext context) {
         String query = request.getQuery() == null ? "" : request.getQuery();
         String inventoryCode = firstNonBlank(request.getInventoryCode(), extractInventoryCode(query));
+        String waybillNo = firstNonBlank(request.getWaybillNo(), extractWaybillNo(query));
         boolean stockIntent = containsAny(query, "库存", "查询", "还有多少", "剩余");
         boolean purchaseIntent = containsAny(query, "采购", "草稿", "购买", "补货");
+        boolean logisticsIntent = waybillNo != null
+                || containsAny(query, "物流", "运单", "轨迹", "快递", "顺丰");
 
         if (inventoryCode != null && stockIntent) {
             ObjectNode input = mapper.createObjectNode().put("inventoryCode", inventoryCode);
@@ -47,9 +51,21 @@ public class RuleBasedAgentPlanner implements AgentPlanner {
             return AgentPlan.tool("rule", "prepare_purchase_draft", input);
         }
 
+        if (logisticsIntent) {
+            if (waybillNo == null) {
+                return AgentPlan.answer(
+                        "rule",
+                        "请提供顺丰运单号，例如：查询运单 SF202610200001 的物流轨迹。",
+                        false
+                );
+            }
+            ObjectNode input = mapper.createObjectNode().put("waybillNo", waybillNo);
+            return AgentPlan.tool("rule", "query_logistics_route", input);
+        }
+
         return AgentPlan.answer(
                 "rule",
-                "请提供物料编码并说明库存查询或采购需求，例如：查询 A001 的库存。",
+                "请提供物料编码或顺丰运单号，例如：查询 A001 的库存、采购 A001 5 个或查询顺丰运单轨迹。",
                 false
         );
     }
@@ -68,6 +84,11 @@ public class RuleBasedAgentPlanner implements AgentPlanner {
             }
         }
         return Integer.valueOf(matcher.group(1));
+    }
+
+    private String extractWaybillNo(String query) {
+        Matcher matcher = WAYBILL_NO.matcher(query);
+        return matcher.find() ? matcher.group(1).toUpperCase() : null;
     }
 
     private boolean containsAny(String value, String... candidates) {

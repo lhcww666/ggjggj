@@ -8,6 +8,7 @@ public class ChatRequest {
     private String conversationId;
     private String inventoryCode;
     private Integer quantity;
+    private String waybillNo;
     private String confirmDraftId;
 
     public String getQuery() {
@@ -56,6 +57,14 @@ public class ChatRequest {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public String getWaybillNo() {
+        return waybillNo;
+    }
+
+    public void setWaybillNo(String waybillNo) {
+        this.waybillNo = waybillNo;
     }
 
     public String getConfirmDraftId() {

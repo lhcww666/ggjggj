@@ -54,12 +54,14 @@ Planner 只接收用户文本、物料编码和数量等最小业务信息，不
   -> Supervisor Agent
   -> Inventory Specialist（query_stock）
   -> Purchase Specialist（prepare_purchase_draft / explicit confirmation）
+  -> Logistics Specialist（query_logistics_route）
   -> Java ToolRegistry
 ```
 
 主管负责可解释的意图路由，并记录 `supervisor -> specialist` handoff。
 每个专家拥有独立的工具白名单，Planner 只能看到白名单内工具。专家越权调用时返回
 `scope-blocked`，业务写操作仍必须经过 `confirmDraftId` 人工确认。
+物流专家通过工具适配器调用顺丰轨迹服务，供应商协议和 Agent 路由保持解耦。
 
 静态控制台直接调用团队接口，展示 Agent 卡片、路由原因、handoff、工具结果和固定评测集，
 不引入额外前端依赖。

@@ -135,6 +135,30 @@ public class AgentTeamEvaluationService {
                 "rule",
                 null
         ));
+        cases.add(new EvaluationCase(
+                "物流轨迹路由",
+                "查询运单 SF202610200001 的物流轨迹",
+                null,
+                "logistics-specialist",
+                "rule",
+                "query_logistics_route"
+        ));
+        cases.add(new EvaluationCase(
+                "物流缺少运单号",
+                "帮我查询物流轨迹",
+                null,
+                "logistics-specialist",
+                "rule",
+                null
+        ));
+        cases.add(new EvaluationCase(
+                "库存专家越权查物流",
+                "查询运单 SF202610200001 的物流轨迹",
+                "inventory-specialist",
+                "inventory-specialist",
+                "scope-blocked",
+                null
+        ));
         return cases;
     }
 

@@ -172,7 +172,7 @@
       margin-left: 30px;
       border-left: 1px dashed rgba(103, 232, 249, .35);
     }
-    .agents { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .agents { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
     .agent {
       min-height: 134px;
       padding: 14px;
@@ -185,6 +185,7 @@
     .agent-title strong { font-size: 13px; }
     .agent-description { margin: 10px 0 12px; color: var(--muted); font-size: 11px; line-height: 1.55; }
     .tool-list { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tool-list code { overflow-wrap: anywhere; }
     code {
       padding: 4px 6px;
       border: 1px solid rgba(120, 152, 255, .18);
@@ -353,7 +354,7 @@
         <div>
           <div class="eyebrow">Supervisor / Specialist / Java Tools</div>
           <h1>Multi-agent control plane.</h1>
-          <p>主管 Agent 负责意图路由，库存与采购专家只执行各自的 Java 工具白名单。每次 handoff、规划器选择和业务结果都可以追踪。</p>
+          <p>主管 Agent 负责意图路由，库存、采购与物流专家只执行各自的 Java 工具白名单。每次 handoff、规划器选择和业务结果都可以追踪。</p>
         </div>
         <div class="hero-metrics">
           <div class="metric"><span>ONLINE AGENTS</span><b id="agentMetric">—</b></div>
@@ -395,12 +396,10 @@
               <span class="pill">LIVE</span>
             </div>
             <div class="command-box">
-              <textarea id="query" aria-label="任务内容" placeholder="例如：采购 A001 5 个">A002 还有多少库存</textarea>
+              <textarea id="query" aria-label="任务内容" placeholder="例如：采购 A001 5 个，或查询运单 SF202610200001 的物流轨迹">A002 还有多少库存</textarea>
               <div class="command-footer">
                 <select id="agentCode" aria-label="选择 Agent">
                   <option value="">自动路由</option>
-                  <option value="inventory-specialist">库存专家</option>
-                  <option value="purchase-specialist">采购专家</option>
                 </select>
                 <button id="send">发送任务</button>
               </div>
@@ -408,6 +407,7 @@
             <div class="quick-row">
               <button class="quick-query" data-query="A001 还有多少库存">库存 A001</button>
               <button class="quick-query" data-query="采购 A002 2 件">采购 A002</button>
+              <button class="quick-query" data-query="查询运单 SF202610200001 的物流轨迹">物流轨迹</button>
               <button class="quick-query" data-query="你好，帮我看看">主管兜底</button>
             </div>
             <div class="result" id="result">
@@ -423,7 +423,7 @@
             <div>
               <div class="label">Routing evaluation</div>
               <h2 class="panel-title">固定路由评测</h2>
-              <div class="panel-note">库存、采购、主管兜底以及双向越权拦截。</div>
+              <div class="panel-note">库存、采购、物流、主管兜底以及专家越权拦截。</div>
             </div>
             <div class="score-wrap">
               <div class="score" id="evalScore">—</div>
@@ -431,7 +431,7 @@
             </div>
           </div>
           <div class="progress"><span id="evalProgress"></span></div>
-          <div id="evaluation"><div class="empty">运行评测查看 8 条固定用例。</div></div>
+          <div id="evaluation"><div class="empty">运行评测查看 11 条固定用例。</div></div>
         </div>
       </section>
 
@@ -452,6 +452,7 @@
     const evaluationEl = document.querySelector('#evaluation');
     const sendButton = document.querySelector('#send');
     const evaluateButton = document.querySelector('#evaluate');
+    const agentSelect = document.querySelector('#agentCode');
 
     function element(tag, text, className) {
       const node = document.createElement(tag);
@@ -470,11 +471,16 @@
     function renderAgents() {
       agentsEl.replaceChildren();
       const tools = new Set();
+      const badges = {
+        'inventory-specialist': 'INV',
+        'purchase-specialist': 'BUY',
+        'logistics-specialist': 'LOG'
+      };
       for (const agent of state.agents) {
         const card = element('article', null, 'agent');
         const title = element('div', null, 'agent-title');
         title.append(element('strong', agent.displayName));
-        title.append(element('span', agent.code === 'inventory-specialist' ? 'INV' : 'BUY', 'label'));
+        title.append(element('span', badges[agent.code] || 'AGT', 'label'));
         card.append(title);
         card.append(element('div', agent.description, 'agent-description'));
         const list = element('div', null, 'tool-list');
@@ -487,6 +493,10 @@
       }
       document.querySelector('#agentMetric').textContent = String(state.agents.length).padStart(2, '0');
       document.querySelector('#toolMetric').textContent = String(tools.size).padStart(2, '0');
+      agentSelect.replaceChildren(new Option('自动路由', ''));
+      for (const agent of state.agents) {
+        agentSelect.append(new Option(agent.displayName, agent.code));
+      }
     }
 
     function renderTeamResponse(data) {

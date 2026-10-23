@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * 主管 Agent 负责路由，专家 Agent 只执行自己的工具白名单。
@@ -17,6 +18,7 @@ import java.util.Set;
 public class AgentTeamService {
 
     private static final String SUPERVISOR = "supervisor";
+    private static final Pattern WAYBILL_NO = Pattern.compile("\\bSF\\d{6,}\\b", Pattern.CASE_INSENSITIVE);
 
     private final SpecialistAgentRegistry registry;
     private final AgentService agentService;
@@ -62,6 +64,10 @@ public class AgentTeamService {
         String query = request.getQuery() == null ? "" : request.getQuery();
         if (containsAny(query, "采购", "购买", "补货", "草稿", "下单")) {
             return new Route(registry.find("purchase-specialist"), "检测到采购或草稿意图");
+        }
+        if (WAYBILL_NO.matcher(query).find()
+                || containsAny(query, "物流", "运单", "轨迹", "快递", "顺丰")) {
+            return new Route(registry.find("logistics-specialist"), "检测到物流轨迹查询意图");
         }
         if (containsAny(query, "库存", "查询", "剩余", "还有多少")) {
             return new Route(registry.find("inventory-specialist"), "检测到库存查询意图");

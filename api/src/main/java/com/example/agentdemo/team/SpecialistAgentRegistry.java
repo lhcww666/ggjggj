@@ -26,6 +26,12 @@ public class SpecialistAgentRegistry {
                 "prepare_purchase_draft",
                 "confirm_purchase_draft"
         ));
+        register(new SpecialistAgent(
+                "logistics-specialist",
+                "物流专家",
+                "只负责按顺丰运单号查询物流轨迹，不处理发货单创建或取消。",
+                "query_logistics_route"
+        ));
     }
 
     public SpecialistAgent find(String code) {

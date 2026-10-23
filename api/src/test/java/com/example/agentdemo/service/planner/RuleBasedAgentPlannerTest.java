@@ -37,4 +37,26 @@ class RuleBasedAgentPlannerTest {
         assertThat(plan.getToolName()).isEqualTo("query_stock");
         assertThat(plan.getInput().path("inventoryCode").asText()).isEqualTo("A002");
     }
+
+    @Test
+    void extractsWaybillNumberForLogisticsQuery() {
+        ChatRequest request = new ChatRequest();
+        request.setQuery("查询运单 sf202610200001 的物流轨迹");
+
+        AgentPlan plan = planner.plan(request, context);
+
+        assertThat(plan.getToolName()).isEqualTo("query_logistics_route");
+        assertThat(plan.getInput().path("waybillNo").asText()).isEqualTo("SF202610200001");
+    }
+
+    @Test
+    void asksForWaybillWhenLogisticsIntentHasNoNumber() {
+        ChatRequest request = new ChatRequest();
+        request.setQuery("帮我查询物流轨迹");
+
+        AgentPlan plan = planner.plan(request, context);
+
+        assertThat(plan.getToolName()).isNull();
+        assertThat(plan.getAnswer()).contains("运单号");
+    }
 }

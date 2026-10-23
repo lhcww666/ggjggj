@@ -11,7 +11,7 @@
 - 幂等创建
 - 规则规划器与可选 LLM Tool Calling
 - LLM 故障自动降级
-- 主管 Agent、库存专家和采购专家
+- 主管 Agent、库存专家、采购专家和物流专家
 - 专家级工具白名单
 - SSE 流式接口
 
@@ -100,9 +100,12 @@ Content-Type: application/json
 
 - `inventory-specialist`：只允许 `query_stock`
 - `purchase-specialist`：允许 `prepare_purchase_draft` 和显式确认工具
+- `logistics-specialist`：只允许 `query_logistics_route`
 
-主管优先识别采购意图，再识别库存意图。请求也可以通过 `agentCode` 明确选择专家；
+主管优先识别采购意图，再识别物流意图，最后识别库存意图。请求也可以通过
+`agentCode` 明确选择专家；
 如果专家尝试调用其他 Agent 的工具，系统返回 `scope-blocked`，不会执行工具。
+运单号或物流、轨迹、快递、顺丰等意图会路由给物流专家。
 
 路由评测：
 
@@ -110,7 +113,8 @@ Content-Type: application/json
 GET /api/agent/team/evaluate
 ```
 
-固定用例覆盖库存路由、采购路由、主管兜底和双向工具越权拦截。
+固定用例覆盖库存、采购和物流路由、主管兜底以及专家工具越权拦截。
+物流用例覆盖正常轨迹查询、缺少运单号和库存专家越权查询。
 
 ## MySQL 持久化
 
@@ -154,6 +158,20 @@ Content-Type: application/json
   "inventoryCode": "A001"
 }
 ```
+
+## 物流轨迹
+
+```json
+{
+  "userId": "demo-user",
+  "agentCode": "logistics-specialist",
+  "query": "查询运单 SF202610200001 的物流轨迹",
+  "waybillNo": "SF202610200001"
+}
+```
+
+`waybillNo` 也可以从自然语言中的 `SF` 运单号提取。物流专家只暴露
+`query_logistics_route`，不能创建、取消顺丰订单。
 
 ## 采购草稿
 

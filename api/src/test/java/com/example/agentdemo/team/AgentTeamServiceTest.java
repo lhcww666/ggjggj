@@ -11,6 +11,11 @@ import com.example.agentdemo.tool.ConfirmPurchaseDraftTool;
 import com.example.agentdemo.tool.PreparePurchaseDraftTool;
 import com.example.agentdemo.tool.StockQueryTool;
 import com.example.agentdemo.tool.ToolRegistry;
+import com.example.agentdemo.tool.LogisticsRouteTool;
+import com.example.integrations.config.IntegrationProperties;
+import com.example.integrations.operation.OperationLogService;
+import com.example.integrations.repository.MemoryDemoRepository;
+import com.example.integrations.sf.SfExpressService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
@@ -22,10 +27,18 @@ class AgentTeamServiceTest {
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final InMemoryStore store = new InMemoryStore();
+    private final MemoryDemoRepository demoRepository = new MemoryDemoRepository();
+    private final SfExpressService sfExpressService = new SfExpressService(
+            integrationProperties(),
+            mapper,
+            demoRepository,
+            new OperationLogService(demoRepository)
+    );
     private final ToolRegistry tools = new ToolRegistry(Arrays.asList(
             new StockQueryTool(store, mapper),
             new PreparePurchaseDraftTool(store, mapper),
-            new ConfirmPurchaseDraftTool(store, mapper)
+            new ConfirmPurchaseDraftTool(store, mapper),
+            new LogisticsRouteTool(sfExpressService, mapper)
     ));
     private final AgentProperties properties = new AgentProperties();
     private final AgentService agentService = new AgentService(
@@ -85,6 +98,30 @@ class AgentTeamServiceTest {
     }
 
     @Test
+    void routesLogisticsQueryToLogisticsSpecialist() {
+        AgentTeamResponse response = teamService.chat(
+                request("查询运单 SF202610200001 的物流轨迹", null)
+        );
+
+        assertThat(response.getSelectedAgent()).isEqualTo("logistics-specialist");
+        assertThat(response.getHandoffs()).hasSize(1);
+        assertThat(response.getResult().getAnswer()).contains("3 条轨迹").contains("派送中");
+        assertThat(response.getResult().getToolCalls()).extracting("name")
+                .containsExactly("query_logistics_route");
+    }
+
+    @Test
+    void inventorySpecialistCannotQueryLogistics() {
+        AgentTeamResponse response = teamService.chat(
+                request("查询运单 SF202610200001 的物流轨迹", "inventory-specialist")
+        );
+
+        assertThat(response.getSelectedAgent()).isEqualTo("inventory-specialist");
+        assertThat(response.getResult().getPlanner()).isEqualTo("scope-blocked");
+        assertThat(response.getResult().getToolCalls()).isEmpty();
+    }
+
+    @Test
     void unknownIntentStaysWithSupervisor() {
         AgentTeamResponse response = teamService.chat(request("你好，帮我看看", null));
 
@@ -99,5 +136,12 @@ class AgentTeamServiceTest {
         request.setAgentCode(agentCode);
         request.setQuery(query);
         return request;
+    }
+
+    private static IntegrationProperties integrationProperties() {
+        IntegrationProperties properties = new IntegrationProperties();
+        properties.setSfCheckWord("test-sf-check-word");
+        properties.setSfCustomerCode("TEST_CUSTOMER");
+        return properties;
     }
 }

@@ -108,6 +108,9 @@ public class LlmAgentPlanner implements AgentPlanner {
         if (request.getQuantity() != null) {
             user.append("\n结构化提示：quantity=").append(request.getQuantity());
         }
+        if (!isBlank(request.getWaybillNo())) {
+            user.append("\n结构化提示：waybillNo=").append(request.getWaybillNo().trim());
+        }
         messages.addObject().put("role", "user").put("content", user.toString());
 
         ArrayNode tools = body.putArray("tools");

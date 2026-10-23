@@ -129,10 +129,11 @@ Invoke-RestMethod -Method Post `
 
 项目确实使用了多智能体，但采用可控的 `Supervisor -> Specialist` 路由，不是多个模型自由聊天。
 
-当前有两个专家：
+当前有三个专家：
 
 - `inventory-specialist`：只能查询库存；
-- `purchase-specialist`：只能准备采购草稿和执行显式确认。
+- `purchase-specialist`：只能准备采购草稿和执行显式确认；
+- `logistics-specialist`：只能按顺丰运单号查询物流轨迹。
 
 这种方式的价值：
 
@@ -155,11 +156,11 @@ Invoke-RestMethod -Method Post `
 
 ## 在现有代码上增加一个新智能体
 
-以“物流专家”为例，推荐按下面顺序做：
+以“售后专家”为例，推荐按下面顺序做：
 
 1. 新增工具类，实现 `Tool` 的 `name`、`description`、`inputSchema` 和 `execute`；
 2. 把工具声明为 Spring Bean，`ToolRegistry` 会自动收集；
-3. 在 `SpecialistAgentRegistry` 注册 `logistics-specialist`，只允许物流相关工具；
+3. 在 `SpecialistAgentRegistry` 注册 `after-sales-specialist`，只允许售后相关工具；
 4. 在 `AgentTeamService.route` 增加显式选择和意图路由规则；
 5. 在 `AgentTeamEvaluationService` 增加正常路由、缺少参数和越权调用用例；
 6. 用控制台或 HTTP 请求验证 `selectedAgent`、`handoff`、`toolCalls` 和 `planner`；
@@ -251,9 +252,9 @@ mvn -f api/pom.xml verify
 
 当前验证结果：
 
-- 默认 38 个测试；
-- 启用真实 MySQL 后 42 个测试；
-- 多 Agent 路由评测 8/8；
+- 默认 42 个测试；
+- 启用真实 MySQL 后 46 个测试；
+- 多 Agent 路由评测 11/11；
 - RAG 评测 10/10；
 - GitHub Actions 构建、测试、打包和 UI 语法检查。
 
@@ -299,7 +300,7 @@ mvn -f api/pom.xml verify
   Spring Boot 打包和 GitHub Actions CI。
 
 公司实习经历中如果没有真实上线数据，不要编造 QPS、用户量或降本比例。可以写已经验证过的
-事实，例如“完成 42 个自动化测试”“路由评测 8/8”“RAG 评测 10/10”。
+事实，例如“完成 46 个自动化测试”“路由评测 11/11”“RAG 评测 10/10”。
 
 ### 面试自我介绍
 

@@ -4,7 +4,7 @@
 
 一个面向企业业务场景的 Java 全栈演示项目，包含：
 
-- **Agent Gateway Demo**：短期用户上下文、工具注册、规则/LLM Tool Calling、主管 Agent 路由、专家工具白名单、库存查询、采购草稿、确认执行、幂等和 SSE
+- **Agent Gateway Demo**：短期用户上下文、工具注册、规则/LLM Tool Calling、主管 Agent 路由、专家工具白名单、库存查询、采购草稿、物流轨迹、确认执行、幂等和 SSE
 - **Business Integrations Demo**：SSO 单点登录、条码追溯、单据链追溯、顺丰物流模拟
 - **RAG Knowledge Base**：文档切分、关键词 + 哈希 embedding 混合检索、引用来源、权限过滤和评测
 - **Vue 2 控制台**：在一个页面演示 SSO、条码、单据链和顺丰流程
@@ -154,11 +154,11 @@ Agent Gateway 支持可选 OpenAI-Compatible Tool Calling。未配置模型时�
 模型调用失败会自动降级。模型只负责选择工具和参数，Java 仍负责上下文、权限、校验、草稿、
 人工确认和幂等。
 
-多 Agent 模式采用可审计的 `supervisor -> specialist` 路由。主管将库存和采购任务交给不同专家，
+多 Agent 模式采用可审计的 `supervisor -> specialist` 路由。主管将库存、采购和物流任务交给不同专家，
 每个专家只有自己的工具白名单；这不是不受控的 Agent 群聊，也不能绕过人工确认。
 
 前端启动后打开 `http://localhost:9000/agent/` 可以使用多智能体控制台，
-查看 handoff、工具调用，并运行固定的 8 条路由评测。
+查看 handoff、工具调用，并运行固定的 11 条路由评测。
 
 可选 pgvector：
 
@@ -188,7 +188,7 @@ pgvector 模式使用 PostgreSQL + `vector(1536)` 存储 chunk；默认 memory �
 
 ## 验证
 
-- 单一 API：本地默认 38 个测试通过；启用真实 MySQL 集成环境后 42 个测试全部通过
+- 单一 API：本地默认 42 个测试通过；启用真实 MySQL 集成环境后 46 个测试全部通过
 - Agent：工具调用、降级、权限边界、确认幂等
 - Business：登录权限、SSO 防重放、条码、单据链、顺丰和 RAG
 - Vue 页面：真实浏览器交互验证通过
