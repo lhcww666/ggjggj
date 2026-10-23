@@ -115,6 +115,33 @@ GET /api/agent/team/evaluate
 
 固定用例覆盖库存路由、采购路由、主管兜底和双向工具越权拦截。
 
+## MySQL 持久化
+
+默认 profile 使用内存实现，自动化测试无需数据库。MySQL profile 使用
+`agent_gateway` 数据库保存库存、短期上下文、采购草稿和正式订单：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run-mysql.ps1
+```
+
+其他环境可以先设置：
+
+```powershell
+$env:AGENT_DB_USERNAME="agent_gateway"
+$env:AGENT_DB_PASSWORD="<本地密码>"
+mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
+```
+
+`schema-mysql.sql` 会在启动时创建：
+
+- `agent_stock`
+- `agent_context`
+- `agent_purchase_draft`
+- `agent_purchase_order`
+
+确认采购草稿使用数据库主键和订单唯一约束保证幂等。页面顶部的 `DATA LAYER` 会显示
+当前使用 `MYSQL` 还是 `MEMORY`。
+
 ## 库存查询
 
 ```http
@@ -183,6 +210,6 @@ Content-Type: application/json
 ## 设计边界
 
 - 工具 Key 来自配置，生产环境应使用密钥管理
-- 上下文使用内存，生产环境应使用 Redis TTL
-- 数据使用内存，生产环境应使用 MySQL 和事务
+- 默认 profile 使用内存；MySQL profile 已持久化库存、上下文、草稿和订单
+- 生产环境仍建议把短期上下文迁移到 Redis TTL，并按需要增加组织和租户字段
 - 该项目用于学习 Agent 工具网关，不包含真实业务代码

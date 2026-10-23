@@ -4,20 +4,15 @@ import com.example.agentdemo.config.AgentProperties;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-/**
- * 学习版用内存保存上下文。
- * 生产版应该换成 Redis，并设置 TTL、用户、组织、应用、租户等字段。
- */
 @Service
 public class AgentContextService {
 
-    private final ConcurrentMap<String, AgentContext> contexts = new ConcurrentHashMap<>();
+    private final AgentContextStore contextStore;
     private final AgentProperties properties;
 
-    public AgentContextService(AgentProperties properties) {
+    public AgentContextService(AgentContextStore contextStore, AgentProperties properties) {
+        this.contextStore = contextStore;
         this.properties = properties;
     }
 
@@ -30,7 +25,8 @@ public class AgentContextService {
                 isBlank(agentCode) ? "default-agent" : agentCode,
                 expiresAt
         );
-        contexts.put(contextId, context);
+        contextStore.deleteExpired(System.currentTimeMillis());
+        contextStore.save(context);
         return context;
     }
 
@@ -38,9 +34,9 @@ public class AgentContextService {
         if (isBlank(contextId)) {
             return null;
         }
-        AgentContext context = contexts.get(contextId);
+        AgentContext context = contextStore.find(contextId);
         if (context == null || context.isExpired()) {
-            contexts.remove(contextId);
+            contextStore.delete(contextId);
             return null;
         }
         return context;

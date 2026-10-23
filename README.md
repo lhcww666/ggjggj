@@ -59,6 +59,18 @@ mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
 
 需要 Docker Desktop 正在运行。
 
+### Agent Gateway MySQL 模式
+
+本地已提供独立的 `agent_gateway` 数据库。Agent 库存、上下文、采购草稿和订单会持久化到 MySQL：
+
+```powershell
+cd agent-gateway-demo
+powershell -ExecutionPolicy Bypass -File .\scripts\run-mysql.ps1
+```
+
+本机凭据保存在 Git 忽略的 `.local/mysql.password`，脚本只将密码注入当前进程。
+其他环境可通过 `AGENT_DB_USERNAME`、`AGENT_DB_PASSWORD` 提供凭据，表结构会自动初始化。
+
 ## 设计重点
 
 ### 1. 模型不直接写业务库

@@ -1,6 +1,7 @@
 package com.example.agentdemo.team;
 
 import com.example.agentdemo.config.AgentProperties;
+import com.example.agentdemo.context.InMemoryAgentContextStore;
 import com.example.agentdemo.context.AgentContextService;
 import com.example.agentdemo.service.AgentService;
 import com.example.agentdemo.service.planner.RuleBasedAgentPlanner;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AgentTeamEvaluationServiceTest {
 
     @Test
+    @SuppressWarnings("unchecked")
     void routingSuitePassesAllCases() {
         ObjectMapper mapper = new ObjectMapper();
         InMemoryStore store = new InMemoryStore();
@@ -30,7 +32,7 @@ class AgentTeamEvaluationServiceTest {
                 new ConfirmPurchaseDraftTool(store, mapper)
         ));
         AgentService agentService = new AgentService(
-                new AgentContextService(new AgentProperties()),
+                new AgentContextService(new InMemoryAgentContextStore(), new AgentProperties()),
                 tools,
                 mapper,
                 new RuleBasedAgentPlanner(mapper)

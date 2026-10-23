@@ -1,6 +1,7 @@
 package com.example.agentdemo.team;
 
 import com.example.agentdemo.config.AgentProperties;
+import com.example.agentdemo.context.InMemoryAgentContextStore;
 import com.example.agentdemo.context.AgentContextService;
 import com.example.agentdemo.model.ChatRequest;
 import com.example.agentdemo.service.AgentService;
@@ -28,7 +29,7 @@ class AgentTeamServiceTest {
     ));
     private final AgentProperties properties = new AgentProperties();
     private final AgentService agentService = new AgentService(
-            new AgentContextService(properties),
+            new AgentContextService(new InMemoryAgentContextStore(), properties),
             tools,
             mapper,
             new RuleBasedAgentPlanner(mapper)

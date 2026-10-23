@@ -43,6 +43,25 @@
 - 页面运行评测后显示 8/8、100% 和 9 行表格（含表头）
 - 浏览器断言 12/12 通过，无 JavaScript 异常，接口请求均为 HTTP 200
 
+MySQL 持久化验证：
+
+- MySQL profile 启动成功，Hikari 连接 `agent_gateway`
+- `/api/agent/team/runtime` 返回 `storage=mysql`、`contextStore=mysql`
+- 自动初始化 3 条库存数据
+- 库存查询、采购草稿、显式确认和重复确认均成功
+- 数据库实际写入 `agent_context`、`agent_purchase_draft`、`agent_purchase_order`
+- 重启服务后，用数据库中的历史 `draftId` 再次确认，仍返回相同 `orderId`
+- `bishe_schema` 原有 56 张表未修改；Agent 数据只写入独立 `agent_gateway`
+
+新版 MySQL 控制台浏览器验证：
+
+- 页面显示 `MYSQL` 数据层和 `MYSQL online`
+- 库存专家工具轨迹显示 `query_stock`，返回库存 `3`
+- 采购专家显示 `prepare_purchase_draft` 和草稿 ID
+- 越权操作显示 `scope-blocked` 且工具轨迹为 0
+- 路由评测显示 8/8、100% 和 8 条用例
+- 浏览器断言 12/12 通过，无 JavaScript 异常
+
 ## Business Integrations
 
 API 验证：

@@ -1,7 +1,7 @@
 package com.example.agentdemo.tool;
 
 import com.example.agentdemo.context.AgentContext;
-import com.example.agentdemo.store.InMemoryStore;
+import com.example.agentdemo.store.AgentStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Component;
@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConfirmPurchaseDraftTool implements Tool {
 
-    private final InMemoryStore store;
+    private final AgentStore store;
     private final ObjectMapper mapper;
 
-    public ConfirmPurchaseDraftTool(InMemoryStore store, ObjectMapper mapper) {
+    public ConfirmPurchaseDraftTool(AgentStore store, ObjectMapper mapper) {
         this.store = store;
         this.mapper = mapper;
     }

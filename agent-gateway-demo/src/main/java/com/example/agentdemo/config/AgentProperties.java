@@ -9,6 +9,8 @@ public class AgentProperties {
 
     private String toolKey;
     private long contextTtlSeconds = 1800;
+    private String storage = "memory";
+    private String contextStore = "memory";
 
     public String getToolKey() {
         return toolKey;
@@ -24,5 +26,21 @@ public class AgentProperties {
 
     public void setContextTtlSeconds(long contextTtlSeconds) {
         this.contextTtlSeconds = contextTtlSeconds;
+    }
+
+    public String getStorage() {
+        return storage;
+    }
+
+    public void setStorage(String storage) {
+        this.storage = storage;
+    }
+
+    public String getContextStore() {
+        return contextStore;
+    }
+
+    public void setContextStore(String contextStore) {
+        this.contextStore = contextStore;
     }
 }

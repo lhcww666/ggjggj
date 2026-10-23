@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS agent_stock (
+    inventory_code VARCHAR(64) NOT NULL PRIMARY KEY,
+    quantity INT NOT NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT IGNORE INTO agent_stock (inventory_code, quantity) VALUES
+    ('A001', 12),
+    ('A002', 3),
+    ('B100', 0);
+
+CREATE TABLE IF NOT EXISTS agent_context (
+    context_id VARCHAR(64) NOT NULL PRIMARY KEY,
+    user_id VARCHAR(128) NOT NULL,
+    agent_code VARCHAR(128) NOT NULL,
+    expires_at BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_agent_context_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS agent_purchase_draft (
+    draft_id VARCHAR(64) NOT NULL PRIMARY KEY,
+    inventory_code VARCHAR(64) NOT NULL,
+    quantity INT NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS agent_purchase_order (
+    draft_id VARCHAR(64) NOT NULL PRIMARY KEY,
+    order_id VARCHAR(64) NOT NULL UNIQUE,
+    inventory_code VARCHAR(64) NOT NULL,
+    quantity INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

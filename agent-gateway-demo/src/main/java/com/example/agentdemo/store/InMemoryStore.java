@@ -1,6 +1,7 @@
 package com.example.agentdemo.store;
 
 import org.springframework.stereotype.Component;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.util.Map;
 import java.util.UUID;
@@ -11,7 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * 生产版应替换为 MySQL，并把写操作放进事务。
  */
 @Component
-public class InMemoryStore {
+@ConditionalOnProperty(prefix = "agent", name = "storage", havingValue = "memory", matchIfMissing = true)
+public class InMemoryStore implements AgentStore {
 
     private final Map<String, Integer> stocks = new ConcurrentHashMap<>();
     private final Map<String, Draft> drafts = new ConcurrentHashMap<>();
@@ -23,21 +25,24 @@ public class InMemoryStore {
         stocks.put("B100", 0);
     }
 
+    @Override
     public Integer stock(String inventoryCode) {
         return stocks.get(inventoryCode);
     }
 
-    public synchronized Draft createDraft(String inventoryCode, int quantity) {
+    @Override
+    public synchronized String createDraft(String inventoryCode, int quantity) {
         String draftId = UUID.randomUUID().toString();
         Draft draft = new Draft(draftId, inventoryCode, quantity);
         drafts.put(draftId, draft);
-        return draft;
+        return draftId;
     }
 
     public Draft draft(String draftId) {
         return drafts.get(draftId);
     }
 
+    @Override
     public synchronized String confirm(String draftId) {
         String existing = confirmedOrders.get(draftId);
         if (existing != null) {

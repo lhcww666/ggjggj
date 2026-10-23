@@ -2,6 +2,7 @@ package com.example.agentdemo.service.planner;
 
 import com.example.agentdemo.config.AgentLlmProperties;
 import com.example.agentdemo.config.AgentProperties;
+import com.example.agentdemo.context.InMemoryAgentContextStore;
 import com.example.agentdemo.context.AgentContextService;
 import com.example.agentdemo.model.ChatRequest;
 import com.example.agentdemo.model.ChatResponse;
@@ -107,7 +108,8 @@ class LlmAgentPlannerTest {
     private AgentService service(AgentPlanner planner) {
         AgentProperties properties = new AgentProperties();
         properties.setContextTtlSeconds(1800);
-        return new AgentService(new AgentContextService(properties), registry, mapper, planner);
+        return new AgentService(new AgentContextService(new InMemoryAgentContextStore(), properties),
+                registry, mapper, planner);
     }
 
     private ChatRequest request(String query) {

@@ -40,6 +40,19 @@ Planner 只接收用户文本、物料编码和数量等最小业务信息，不
 静态控制台直接调用团队接口，展示 Agent 卡片、路由原因、handoff、工具结果和固定评测集，
 不引入额外前端依赖。
 
+### Persistence
+
+默认 profile 使用内存仓库，便于无依赖测试。MySQL profile 通过 `AgentStore` 和
+`AgentContextStore` 接口切换到 JDBC 实现：
+
+```text
+Agent Tools -> AgentStore -> MySQL agent_gateway
+Agent Gateway -> AgentContextStore -> MySQL agent_gateway
+```
+
+`agent_purchase_order.draft_id` 是主键，`order_id` 有唯一约束；同一草稿重复确认会读取
+已存在订单，服务重启后仍保持幂等。
+
 ## Business Integrations
 
 ### SSO

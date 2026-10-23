@@ -5,6 +5,8 @@ agent:
   # 本地学习用，生产环境必须从环境变量或密钥管理系统注入
   tool-key: local-demo-tool-key
   context-ttl-seconds: 1800
+  storage: memory
+  context-store: memory
   llm:
     # 默认关闭，不配置 Key 也能运行全部演示和测试
     enabled: false

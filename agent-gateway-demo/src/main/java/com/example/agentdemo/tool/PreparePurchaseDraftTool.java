@@ -1,7 +1,7 @@
 package com.example.agentdemo.tool;
 
 import com.example.agentdemo.context.AgentContext;
-import com.example.agentdemo.store.InMemoryStore;
+import com.example.agentdemo.store.AgentStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Component;
@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class PreparePurchaseDraftTool implements Tool {
 
-    private final InMemoryStore store;
+    private final AgentStore store;
     private final ObjectMapper mapper;
 
-    public PreparePurchaseDraftTool(InMemoryStore store, ObjectMapper mapper) {
+    public PreparePurchaseDraftTool(AgentStore store, ObjectMapper mapper) {
         this.store = store;
         this.mapper = mapper;
     }
@@ -51,12 +51,12 @@ public class PreparePurchaseDraftTool implements Tool {
             data.put("code", "INVALID_QUANTITY");
             return ToolResult.error("采购数量必须大于 0", data);
         }
-        InMemoryStore.Draft draft = store.createDraft(code, quantity);
+        String draftId = store.createDraft(code, quantity);
         data.put("code", "ACTION_CONFIRMATION_REQUIRED");
-        data.put("draftId", draft.getDraftId());
+        data.put("draftId", draftId);
         data.put("inventoryCode", code);
         data.put("quantity", quantity);
         data.put("message", "草稿已生成，必须由用户确认后才能创建正式订单");
-        return ToolResult.ok("采购草稿已生成，请确认 draftId=" + draft.getDraftId(), data);
+        return ToolResult.ok("采购草稿已生成，请确认 draftId=" + draftId, data);
     }
 }
