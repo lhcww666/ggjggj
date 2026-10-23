@@ -196,6 +196,9 @@ pgvector 模式使用 PostgreSQL + `vector(1536)` 存储 chunk；默认 memory �
 
 详见 [docs/verification.md](docs/verification.md)。
 
+部署、工具调用、多 Agent 扩展和简历表述见
+[docs/career-guide.md](docs/career-guide.md)。
+
 ## 边界
 
 这是一个干净室学习与作品集项目：
