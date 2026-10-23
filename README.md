@@ -1,5 +1,7 @@
 # Enterprise Agent & Integration Demo
 
+![CI](https://github.com/lhcww666/ggjggj/actions/workflows/ci.yml/badge.svg)
+
 一个面向企业业务场景的 Java 全栈演示项目，包含：
 
 - **Agent Gateway Demo**：短期用户上下文、工具注册、规则/LLM Tool Calling、主管 Agent 路由、专家工具白名单、库存查询、采购草稿、确认执行、幂等和 SSE
@@ -186,9 +188,11 @@ pgvector 模式使用 PostgreSQL + `vector(1536)` 存储 chunk；默认 memory �
 
 ## 验证
 
-- Agent Gateway：库存查询、采购草稿、确认创建、重复确认幂等、直接工具调用
-- Business Integrations：SSO 授权/兑换/重放拦截、条码追溯、单据链、顺丰下单/轨迹
-- Vue 页面：真实浏览器 20/20 交互断言通过
+- 单一 API：38 个自动化测试通过
+- Agent：工具调用、降级、权限边界、确认幂等
+- Business：登录权限、SSO 防重放、条码、单据链、顺丰和 RAG
+- Vue 页面：真实浏览器交互验证通过
+- GitHub Actions：每次推送自动编译、测试和打包
 
 详见 [docs/verification.md](docs/verification.md)。
 

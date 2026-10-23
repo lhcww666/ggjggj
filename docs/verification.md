@@ -25,7 +25,7 @@
 
 多 Agent 路由验证：
 
-- `mvn test`：11 个测试全部通过
+- `mvn -f api/pom.xml test`：38 个测试全部通过
 - `/api/agent/team/agents` 返回库存专家和采购专家 2 个 Agent
 - “A002 还有多少库存”路由到 `inventory-specialist`，返回库存 `3`
 - “采购 A002 2 件”路由到 `purchase-specialist` 并生成草稿
@@ -81,6 +81,23 @@ MySQL 持久化验证：
 - 单一 API 健康检查返回 Agent MySQL 和业务 JDBC 存储模式
 - `scripts/stop-dev.ps1` 只关闭本次记录的 PID
 - 停止后 9000、18080 全部释放
+
+Business 自动化测试：
+
+- 登录成功、错误密码和退出登录
+- 管理员、业务员、查看者角色权限
+- SSO 签名、时间戳、nonce 防重放、一次性 code、用户和目标校验
+- 条码完整事件和未知条码
+- 单据链上下游和未知单据
+- 顺丰创建、重复幂等、非法请求、业务失败、取消和轨迹
+- RAG 引用检索、文档权限、上传删除、空参数和 10/10 评测
+
+GitHub Actions：
+
+- Java 8 Maven 编译与 38 个测试
+- Spring Boot 打包
+- Node 22 UI 服务语法检查
+- 测试失败时上传 Surefire 报告
 
 ## Business Integrations
 
